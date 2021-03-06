@@ -15,8 +15,7 @@ export class GameScene extends Scene {
             torus2: new defs.Torus(3, 15),
             sphere: new defs.Subdivision_Sphere(4),
             circle: new defs.Regular_2D_Polygon(1, 15),
-            // TODO:  Fill in as many additional shape instances as needed in this key/value table.
-            //        (Requirement 1)
+            player: new defs.Cube(),
         };
 
         // *** Materials
@@ -26,24 +25,101 @@ export class GameScene extends Scene {
             test2: new Material(new Gouraud_Shader(),
                 {ambient: .4, diffusivity: .6, color: hex_color("#992828")}),
             ring: new Material(new Ring_Shader()),
-            // TODO:  Fill in as many additional material objects as needed in this key/value table.
-            //        (Requirement 4)
         }
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
+        
+        this.player_transform = Mat4.identity().times(Mat4.translation(2, 0, 0));
+        this.player_moving = false;
+        this.player_jumping = false;
+        
+        this.started_move = 0;
+        this.started_jump = 0;
+
+        this.player_lane = "r";
     }
 
     make_control_panel() {
-        // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
-        this.key_triggered_button("View solar system", ["Control", "0"], () => this.attached = () => this.initial_camera_location);
+        // Draw the game's buttons
+        this.key_triggered_button("Move Left", ["g"], function () {
+            if (this.player_lane == "r") {
+                this.player_moving = true;
+            }
+        });
+        this.key_triggered_button("Move Right", ["j"], function () {
+            if (this.player_lane == "l") {
+                this.player_moving = true;
+            }
+        });
         this.new_line();
-        this.key_triggered_button("Attach to planet 1", ["Control", "1"], () => this.attached = () => this.planet_1);
-        this.key_triggered_button("Attach to planet 2", ["Control", "2"], () => this.attached = () => this.planet_2);
-        this.new_line();
-        this.key_triggered_button("Attach to planet 3", ["Control", "3"], () => this.attached = () => this.planet_3);
-        this.key_triggered_button("Attach to planet 4", ["Control", "4"], () => this.attached = () => this.planet_4);
-        this.new_line();
-        this.key_triggered_button("Attach to moon", ["Control", "m"], () => this.attached = () => this.moon);
+        this.key_triggered_button("Jump", ["y"], function () {
+            this.player_jumping = true;
+        });
+    }
+
+    // Gets an input 'time' and calculates the location of the player through the movement animation
+    // If the animation has completed then return player_moving and started_move to the default state
+    getPlayerX(time) {
+        let dir = 1;
+
+        if (this.player_lane == "l") {
+            dir = -1;
+        }
+        if (time < 1) {
+            let x_pos = dir * 4 * ( 1/(1 + Math.pow(2.718, 10*(time-0.5))) - 0.5);
+            return Mat4.identity().times(Mat4.translation(x_pos, 0, 0));
+        }
+        else {
+            if (this.player_lane == "l") {
+                this.player_lane = "r";
+            } else {
+                this.player_lane = "l";
+            }
+            this.player_moving = false;
+            this.started_move = 0;
+            return Mat4.identity().times(Mat4.translation(-2*dir, 0, 0));
+        }
+    }
+
+    // Gets an input 'time' and calculates the location of the player through the jump animation
+    // If the animation has completed then return player_jumping and started_jump to the default state
+    getPlayerY(time) {
+        if (time < 1) {
+            let y_pos = -Math.pow(4*time - 2, 2) + 4;
+            return Mat4.identity().times(Mat4.translation(0, y_pos, 0));
+        }
+        else {
+            this.player_jumping = false;
+            this.started_jump = 0;
+            return Mat4.identity();
+        }
+    }
+    
+    // Called once per 'display' - modifies this.player_transform based on where we are in the 
+    // movement and jump animations
+    getPlayerPosition(t) {
+        let x_transform = Mat4.identity().times(Mat4.translation(2, 0, 0));
+        if (this.player_lane == "l") {
+            x_transform = Mat4.identity().times(Mat4.translation(-2, 0, 0));
+        }
+
+        let y_transform = Mat4.identity();
+
+        if (this.player_moving) {
+            if (this.started_move == 0) {
+                this.started_move = t;
+            }
+            x_transform = this.getPlayerX(t - this.started_move);
+        }
+
+        if (this.player_jumping) {
+            if (this.started_jump == 0) {
+                this.started_jump = t;
+            }
+            y_transform = this.getPlayerY(t - this.started_jump);
+        }
+
+        this.player_transform = x_transform.times(y_transform);
     }
 
     display(context, program_state) {
@@ -58,16 +134,18 @@ export class GameScene extends Scene {
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, .1, 1000);
 
-        // TODO: Lighting (Requirement 2)
         const light_position = vec4(0, 5, 5, 1);
         program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 1000)];
 
-        // TODO:  Fill in matrix operations and drawing code to draw the solar system scene (Requirements 3 and 4)
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
         const yellow = hex_color("#fac91a");
         let model_transform = Mat4.identity();
 
-        this.shapes.torus.draw(context, program_state, model_transform, this.materials.test.override({color: yellow}));
+        model_transform = model_transform.times(Mat4.translation(1, 0, 0));
+
+        this.getPlayerPosition(t);
+
+        this.shapes.player.draw(context, program_state, this.player_transform, this.materials.test.override({color: yellow}));
     }
 }
 
