@@ -4,6 +4,8 @@ const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene,
 } = tiny;
 
+import { Player } from './player.js';
+
 export class GameScene extends Scene {
     constructor() {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
@@ -29,103 +31,21 @@ export class GameScene extends Scene {
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
         
-        this.player_transform = Mat4.identity().times(Mat4.translation(2, 0, 0));
-        this.player_moving = false;
-        this.player_jumping = false;
-        
-        this.started_move = 0;
-        this.started_jump = 0;
-
-        this.player_lane = "r";
+        this.player = new Player();
     }
 
     make_control_panel() {
         // Draw the game's buttons
         this.key_triggered_button("Move Left", ["g"], function () {
-            if (this.player_lane == "r") {
-                this.player_moving = true;
-            }
+            this.player.tryMove("left");
         });
         this.key_triggered_button("Move Right", ["j"], function () {
-            if (this.player_lane == "l") {
-                this.player_moving = true;
-            }
+            this.player.tryMove("right");
         });
         this.new_line();
         this.key_triggered_button("Jump", ["y"], function () {
-            this.player_jumping = true;
+            this.player.jump();
         });
-    }
-
-    // Gets an input 'time' and calculates the location of the player through the movement animation
-    // If the animation has completed then return player_moving and started_move to the default state
-    getPlayerX(time) {
-        let dir = -1;
-
-        if (this.player_lane == "l") {
-            dir = 1;
-        }
-        if (time < 0.25) {
-            // Player moves sideways with linear speed
-            let x_pos = dir * (16*time - 2);
-            return Mat4.identity().times(Mat4.translation(x_pos, 0, 0));
-        }
-        else {
-            if (this.player_lane == "l") {
-                this.player_lane = "r";
-            } else {
-                this.player_lane = "l";
-            }
-            this.player_moving = false;
-            this.started_move = 0;
-            return Mat4.identity().times(Mat4.translation(2*dir, 0, 0));
-        }
-    }
-
-    // Gets an input 'time' and calculates the location of the player through the jump animation
-    // If the animation has completed then return player_jumping and started_jump to the default state
-    getPlayerY(time) {
-        if (time < 0.5) {
-            // Player jumps in parabolic motion
-            let y_pos = -Math.pow(8*time - 2, 2) + 4;
-            return Mat4.identity().times(Mat4.translation(0, y_pos, 0));
-        }
-        else {
-            this.player_jumping = false;
-            this.started_jump = 0;
-            return Mat4.identity();
-        }
-    }
-    
-    // Called once per 'display' - modifies this.player_transform based on where player is 
-    // in the movement and jump animations
-    getPlayerPosition(t) {
-        // Determine default x_transform based on current lane position
-        let x_transform = Mat4.identity().times(Mat4.translation(2, 0, 0));
-        if (this.player_lane == "l") {
-            x_transform = Mat4.identity().times(Mat4.translation(-2, 0, 0));
-        }
-        
-        // Default y_transform
-        let y_transform = Mat4.identity();
-
-        // Modify x_transform if player in movement animation
-        if (this.player_moving) {
-            if (this.started_move == 0) {
-                this.started_move = t;
-            }
-            x_transform = this.getPlayerX(t - this.started_move);
-        }
-
-        // Modify y_transform if player in jump animation
-        if (this.player_jumping) {
-            if (this.started_jump == 0) {
-                this.started_jump = t;
-            }
-            y_transform = this.getPlayerY(t - this.started_jump);
-        }
-
-        this.player_transform = x_transform.times(y_transform);
     }
 
     display(context, program_state) {
@@ -149,9 +69,9 @@ export class GameScene extends Scene {
 
         model_transform = model_transform.times(Mat4.translation(1, 0, 0));
 
-        this.getPlayerPosition(t);
+        let player_transform = this.player.getPosition(t);
 
-        this.shapes.player.draw(context, program_state, this.player_transform, this.materials.test.override({color: yellow}));
+        this.shapes.player.draw(context, program_state, player_transform, this.materials.test.override({color: yellow}));
     }
 }
 
