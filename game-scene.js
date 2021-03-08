@@ -20,43 +20,19 @@ export class GameScene extends Scene {
             track: new defs.Cube(),
             hurdle: new defs.Cube(),
             blockade: new defs.Cube(),
-            //background: new Cube(),
-            background: new defs.Square(),
             cylinder: new defs.Capped_Cylinder(20,20),
-            cone: new defs.Closed_Cone(50,50),
+            bg_cone: new defs.Closed_Cone(50,50),
         };
-
-        //partitions texture into fourths of a face
-        /*
-        this.shapes.background.arrays.texture_coord = [
-            new Vector([0,0]), new Vector([2,0]), new Vector([0,2]), new Vector([2,2]),
-            new Vector([0,0]), new Vector([2,0]), new Vector([0,2]), new Vector([2,2]),
-            new Vector([0,0]), new Vector([2,0]), new Vector([0,2]), new Vector([2,2]),
-            new Vector([0,0]), new Vector([2,0]), new Vector([0,2]), new Vector([2,2]),
-            new Vector([0,0]), new Vector([2,0]), new Vector([0,2]), new Vector([2,2]),
-            new Vector([0,0]), new Vector([2,0]), new Vector([0,2]), new Vector([2,2]),
-        ];
-        */
 
         // *** Materials
         this.materials = {
             test: new Material(new defs.Phong_Shader(),
                 {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
-            test2: new Material(new Gouraud_Shader(),
-                {ambient: .4, diffusivity: .6, color: hex_color("#992828")}),
-            ring: new Material(new Ring_Shader()),
-            background: new Material(new defs.Phong_Shader(), {
-                ambient: .4, 
-                diffusivity: .6, 
-                color: hex_color("#87ceff")
-            }),
-            /*texture_vader: new Material(new Texture_Scroll_X(), {
-                color: hex_color("#000000"),
-                ambient: .5, diffusivity: 0.1, specularity: 0.1,
-                texture: new Texture("assets/vader.png"),
-                min_filter: "LINEAR_MINMAP_FILTERING"
-            }),*/
-            texture_vader: new Material(new Texture_Scroll_Y(), {
+            red: new Material(new defs.Phong_Shader(),
+                {ambient: .4, diffusivity: .6, color: hex_color("#ff0000")}),
+            blue: new Material(new defs.Phong_Shader(),
+                {ambient: .4, diffusivity: .6, color: hex_color("#0000ff")}),
+            bg_texture: new Material(new Texture_Scroll_Y(), {
                 ambient: .5, diffusivity: 0.1, specularity: 0.1,
                 texture: new Texture("assets/milkyway.png"),
                 min_filter: "LINEAR_MINMAP_FILTERING",
@@ -64,14 +40,10 @@ export class GameScene extends Scene {
             }),
         }
 
-        this.spin = 0;
-        this.bg = Mat4.identity();
-
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
     }
 
     make_control_panel() {
-        this.key_triggered_button("Cube rotation", ["c"], () => this.spin ^= 1);
     }
     
     // takes speed makes a hurdle on the track moving at set speed
@@ -83,9 +55,12 @@ export class GameScene extends Scene {
         this.shapes.hurdle.draw(context, program_state, hurdle_transform, this.materials.test);
     }
 
-    make_background(bg_transform, context, program_state) {
-        bg_transform = bg_transform.times(Mat4.translation(0,0,-50)).times(Mat4.scale(20,20,20));
-        this.shapes.background.draw(context, program_state, bg_transform, this.materials.texture_vader);
+    make_background(context, program_state) {
+        let bg_transform = Mat4.identity()
+                            .times(Mat4.translation(0,0,-20))
+                            .times(Mat4.rotation(Math.PI,1,1,0))
+                            .times(Mat4.scale(20,20,50));
+        this.shapes.bg_cone.draw(context, program_state, bg_transform, this.materials.bg_texture);
     }
 
     display(context, program_state) {
@@ -104,43 +79,27 @@ export class GameScene extends Scene {
         program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 1000)];
 
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
-        let t_2 = (t % (2 * Math.PI));
         const blue = hex_color("#0000ff");
         const red = hex_color("#ff0000");
         let model_transform = Mat4.identity();
 
-        this.shapes.sphere.draw(context, program_state, model_transform, this.materials.test);
-
-        // background set up
-        this.bg.post_multiply(Mat4.rotation(this.spin * dt * 20 / 60 * 2 * Math.PI, 0, 1, 0));
-        //this.make_background(this.bg, context, program_state);
-
-        
-        // cone test
-        let my_transform = Mat4.identity()
-                            .times(Mat4.translation(0,0,-20))
-                            .times(Mat4.rotation(Math.PI,1,1,0))
-                            .times(Mat4.scale(20,20,50));
-        this.shapes.cone.draw(context,program_state, my_transform, this.materials.texture_vader);
-        // cylinder test
-        //my_transform = Mat4.identity().times(Mat4.translation(9,0,0));
-        //this.shapes.cylinder.draw(context, program_state, my_transform, this.materials.background);
-
-        let track_one_transform = Mat4.identity();
+        // background
+        this.make_background(context, program_state);
 
         // draw left track
-        track_one_transform = track_one_transform.times(Mat4.translation(-1, 0, 0));
-        track_one_transform = track_one_transform.times(Mat4.translation(0, 0, -10));
-        track_one_transform = track_one_transform.times(Mat4.scale(1, 0.5, 30));
-
-        this.shapes.track.draw(context, program_state, track_one_transform, this.materials.test.override({color: blue}));
+        let track_one_transform = Mat4.identity()
+                                    .times(Mat4.translation(-1, 0, 0))
+                                    .times(Mat4.translation(0, 0, -10))
+                                    .times(Mat4.scale(1, 0.5, 30));
+        
+        this.shapes.track.draw(context, program_state, track_one_transform, this.materials.blue);
 
         let spacing_1 = 10;
         let speed_1 = 6;
 
         // draw right track
-        track_one_transform = track_one_transform.times(Mat4.translation(2, 0, 0));
-        this.shapes.track.draw(context, program_state, track_one_transform, this.materials.test.override({color: red}));
+        let track_two_transform = track_one_transform.times(Mat4.translation(2, 0, 0));
+        this.shapes.track.draw(context, program_state, track_two_transform, this.materials.red);
 
         // make rhurdle_1a
         //make_hurdle(6, context, program_state);
@@ -148,63 +107,42 @@ export class GameScene extends Scene {
         rhurdle_1a_transform = rhurdle_1a_transform.times(Mat4.translation(-1, 1.5, -40));
         rhurdle_1a_transform = rhurdle_1a_transform.times(Mat4.translation(0, 0, (speed_1*t) % 60));
         rhurdle_1a_transform = rhurdle_1a_transform.times(Mat4.scale(1, 1, 0.5));
-        this.shapes.hurdle.draw(context, program_state, rhurdle_1a_transform, this.materials.test.override({color: red}));
+        this.shapes.hurdle.draw(context, program_state, rhurdle_1a_transform, this.materials.red);
 
         // make rblockade_1a
         let rblockade_1a_transform = Mat4.identity();
         rblockade_1a_transform = rblockade_1a_transform.times(Mat4.translation(-1, 2.5, -40));
         rblockade_1a_transform = rblockade_1a_transform.times(Mat4.translation(0, 0, (speed_1*t - spacing_1) % 60));
         rblockade_1a_transform = rblockade_1a_transform.times(Mat4.scale(1, 3, 0.5));
-        this.shapes.blockade.draw(context, program_state, rblockade_1a_transform, this.materials.test.override({color: blue}));
+        this.shapes.blockade.draw(context, program_state, rblockade_1a_transform, this.materials.blue);
 
         // make rblockade_1b
         let rblockade_1b_transform = Mat4.identity();
         rblockade_1b_transform = rblockade_1b_transform.times(Mat4.translation(-1, 2.5, -40));
         rblockade_1b_transform = rblockade_1b_transform.times(Mat4.translation(0, 0, (speed_1*t - 4 * spacing_1) % 60));
         rblockade_1b_transform = rblockade_1b_transform.times(Mat4.scale(1, 3, 0.5));
-        this.shapes.blockade.draw(context, program_state, rblockade_1b_transform, this.materials.test.override({color: blue}));
+        this.shapes.blockade.draw(context, program_state, rblockade_1b_transform, this.materials.blue);
 
         // make lblockade_1a
         let lblockade_1a_transform = Mat4.identity();
         lblockade_1a_transform = lblockade_1a_transform.times(Mat4.translation(1, 2.5, -40));
         lblockade_1a_transform = lblockade_1a_transform.times(Mat4.translation(0, 0, (speed_1*t - 3 * spacing_1) % 60));
         lblockade_1a_transform = lblockade_1a_transform.times(Mat4.scale(1, 3, 0.5));
-        this.shapes.blockade.draw(context, program_state, lblockade_1a_transform, this.materials.test.override({color: blue}));
+        this.shapes.blockade.draw(context, program_state, lblockade_1a_transform, this.materials.blue);
 
         // make lhurdle_1a
         let lhurdle_1a_transform = Mat4.identity();
         lhurdle_1a_transform = lhurdle_1a_transform.times(Mat4.translation(1, 1.5, -40));
         lhurdle_1a_transform = lhurdle_1a_transform.times(Mat4.translation(0, 0, (speed_1*t) % 60));
         lhurdle_1a_transform = lhurdle_1a_transform.times(Mat4.scale(1, 1, 0.5));
-        this.shapes.hurdle.draw(context, program_state, lhurdle_1a_transform, this.materials.test.override({color: red}));
+        this.shapes.hurdle.draw(context, program_state, lhurdle_1a_transform, this.materials.red);
 
         // make lhurdle_1b
         let lhurdle_1b_transform = Mat4.identity();
         lhurdle_1b_transform = lhurdle_1b_transform.times(Mat4.translation(1, 1.5, -40));
         lhurdle_1b_transform = lhurdle_1b_transform.times(Mat4.translation(0, 0, (speed_1*t - 2 * spacing_1) % 60));
         lhurdle_1b_transform = lhurdle_1b_transform.times(Mat4.scale(1, 1, 0.5));
-        this.shapes.hurdle.draw(context, program_state, lhurdle_1b_transform, this.materials.test.override({color: red}));
-    }
-}
-
-class Texture_Scroll_X extends Textured_Phong {
-    fragment_glsl_code() {
-        return this.shared_glsl_code() + `
-            varying vec2 f_tex_coord;
-            uniform sampler2D texture;
-            uniform float animation_time;
-            
-            void main(){
-                float speed = mod (animation_time * 2.0, 128.0);
-
-                // Sample the texture image in the correct place:
-                vec4 tex_color = texture2D( texture, vec2(f_tex_coord.x - speed, f_tex_coord.y));
-                if( tex_color.w < .01 ) discard;
-                                                                         // Compute an initial (ambient) color:
-                gl_FragColor = vec4( ( tex_color.xyz + shape_color.xyz ) * ambient, shape_color.w * tex_color.w ); 
-                                                                         // Compute the final color with contributions from lights:
-                gl_FragColor.xyz += phong_model_lights( normalize( N ), vertex_worldspace );
-        } `;
+        this.shapes.hurdle.draw(context, program_state, lhurdle_1b_transform, this.materials.red);
     }
 }
 
