@@ -4,7 +4,7 @@ const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene, Texture
 } = tiny;
 
-const {Cube, Axis_Arrows, Textured_Phong} = defs 
+const {Capped_Cylinder, Cube, Axis_Arrows, Textured_Phong} = defs 
 
 export class GameScene extends Scene {
     constructor() {
@@ -20,10 +20,14 @@ export class GameScene extends Scene {
             track: new defs.Cube(),
             hurdle: new defs.Cube(),
             blockade: new defs.Cube(),
-            background: new Cube(),
+            //background: new Cube(),
+            background: new defs.Square(),
+            cylinder: new defs.Capped_Cylinder(20,20),
+            cone: new defs.Closed_Cone(50,50),
         };
 
         //partitions texture into fourths of a face
+        /*
         this.shapes.background.arrays.texture_coord = [
             new Vector([0,0]), new Vector([2,0]), new Vector([0,2]), new Vector([2,2]),
             new Vector([0,0]), new Vector([2,0]), new Vector([0,2]), new Vector([2,2]),
@@ -32,6 +36,7 @@ export class GameScene extends Scene {
             new Vector([0,0]), new Vector([2,0]), new Vector([0,2]), new Vector([2,2]),
             new Vector([0,0]), new Vector([2,0]), new Vector([0,2]), new Vector([2,2]),
         ];
+        */
 
         // *** Materials
         this.materials = {
@@ -45,16 +50,22 @@ export class GameScene extends Scene {
                 diffusivity: .6, 
                 color: hex_color("#87ceff")
             }),
-            texture_vader: new Material(new Texture_Scroll_X(), {
+            /*texture_vader: new Material(new Texture_Scroll_X(), {
                 color: hex_color("#000000"),
                 ambient: .5, diffusivity: 0.1, specularity: 0.1,
                 texture: new Texture("assets/vader.png"),
                 min_filter: "LINEAR_MINMAP_FILTERING"
+            }),*/
+            texture_vader: new Material(new Texture_Scroll_Y(), {
+                ambient: .5, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/milkyway.png"),
+                min_filter: "LINEAR_MINMAP_FILTERING",
+                color: hex_color("#000000")
             }),
         }
 
         this.spin = 0;
-        this.bg = Mat4.translation(4,0,0);
+        this.bg = Mat4.identity();
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
     }
@@ -72,8 +83,8 @@ export class GameScene extends Scene {
         this.shapes.hurdle.draw(context, program_state, hurdle_transform, this.materials.test);
     }
 
-    make_background(context, program_state) {
-        let bg_transform = Mat4.identity().times(Mat4.scale(1,1,1)).times(Mat4.translation(4,0,0));
+    make_background(bg_transform, context, program_state) {
+        bg_transform = bg_transform.times(Mat4.translation(0,0,-50)).times(Mat4.scale(20,20,20));
         this.shapes.background.draw(context, program_state, bg_transform, this.materials.texture_vader);
     }
 
@@ -98,12 +109,22 @@ export class GameScene extends Scene {
         const red = hex_color("#ff0000");
         let model_transform = Mat4.identity();
 
-        this.bg.post_multiply(Mat4.rotation(this.spin * dt * 20 / 60 * 2 * Math.PI, 0, 1, 0));
-
         this.shapes.sphere.draw(context, program_state, model_transform, this.materials.test);
 
-        model_transform = this.bg;
-        this.shapes.background.draw(context, program_state, model_transform, this.materials.texture_vader);
+        // background set up
+        this.bg.post_multiply(Mat4.rotation(this.spin * dt * 20 / 60 * 2 * Math.PI, 0, 1, 0));
+        //this.make_background(this.bg, context, program_state);
+
+        
+        // cone test
+        let my_transform = Mat4.identity()
+                            .times(Mat4.translation(0,0,-20))
+                            .times(Mat4.rotation(Math.PI,1,1,0))
+                            .times(Mat4.scale(20,20,50));
+        this.shapes.cone.draw(context,program_state, my_transform, this.materials.texture_vader);
+        // cylinder test
+        //my_transform = Mat4.identity().times(Mat4.translation(9,0,0));
+        //this.shapes.cylinder.draw(context, program_state, my_transform, this.materials.background);
 
         let track_one_transform = Mat4.identity();
 
@@ -163,8 +184,6 @@ export class GameScene extends Scene {
         lhurdle_1b_transform = lhurdle_1b_transform.times(Mat4.translation(0, 0, (speed_1*t - 2 * spacing_1) % 60));
         lhurdle_1b_transform = lhurdle_1b_transform.times(Mat4.scale(1, 1, 0.5));
         this.shapes.hurdle.draw(context, program_state, lhurdle_1b_transform, this.materials.test.override({color: red}));
-
-        //this.make_background(context, program_state);
     }
 }
 
@@ -180,6 +199,27 @@ class Texture_Scroll_X extends Textured_Phong {
 
                 // Sample the texture image in the correct place:
                 vec4 tex_color = texture2D( texture, vec2(f_tex_coord.x - speed, f_tex_coord.y));
+                if( tex_color.w < .01 ) discard;
+                                                                         // Compute an initial (ambient) color:
+                gl_FragColor = vec4( ( tex_color.xyz + shape_color.xyz ) * ambient, shape_color.w * tex_color.w ); 
+                                                                         // Compute the final color with contributions from lights:
+                gl_FragColor.xyz += phong_model_lights( normalize( N ), vertex_worldspace );
+        } `;
+    }
+}
+
+class Texture_Scroll_Y extends Textured_Phong {
+    fragment_glsl_code() {
+        return this.shared_glsl_code() + `
+            varying vec2 f_tex_coord;
+            uniform sampler2D texture;
+            uniform float animation_time;
+            
+            void main(){
+                float speed = mod (animation_time * 2.0, 128.0);
+
+                // Sample the texture image in the correct place:
+                vec4 tex_color = texture2D( texture, vec2(f_tex_coord.x, f_tex_coord.y - speed));
                 if( tex_color.w < .01 ) discard;
                                                                          // Compute an initial (ambient) color:
                 gl_FragColor = vec4( ( tex_color.xyz + shape_color.xyz ) * ambient, shape_color.w * tex_color.w ); 
