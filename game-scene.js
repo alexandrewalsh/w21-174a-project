@@ -5,6 +5,7 @@ const {
 } = tiny;
 
 const {Capped_Cylinder, Cube, Axis_Arrows, Textured_Phong} = defs 
+import { Player } from './player.js';
 
 export class GameScene extends Scene {
     constructor() {
@@ -22,6 +23,7 @@ export class GameScene extends Scene {
             blockade: new defs.Cube(),
             cylinder: new defs.Capped_Cylinder(20,20),
             bg_cone: new defs.Closed_Cone(50,50),
+            player: new defs.Cube(),
         };
 
         // *** Materials
@@ -41,11 +43,10 @@ export class GameScene extends Scene {
         }
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
+        
+        this.player = new Player();
     }
-
-    make_control_panel() {
-    }
-    
+  
     // takes speed makes a hurdle on the track moving at set speed
     make_hurdle(speed, context, program_state) {
         let hurdle_transform = Mat4.identity();
@@ -61,6 +62,20 @@ export class GameScene extends Scene {
                             .times(Mat4.rotation(Math.PI,1,1,0))
                             .times(Mat4.scale(20,20,50));
         this.shapes.bg_cone.draw(context, program_state, bg_transform, this.materials.bg_texture);
+    }
+
+    make_control_panel() {
+        // Draw the game's buttons
+        this.key_triggered_button("Move Left", ["g"], function () {
+            this.player.tryMove("left");
+        });
+        this.key_triggered_button("Move Right", ["j"], function () {
+            this.player.tryMove("right");
+        });
+        this.new_line();
+        this.key_triggered_button("Jump", ["y"], function () {
+            this.player.jump();
+        });
     }
 
     display(context, program_state) {
@@ -82,6 +97,10 @@ export class GameScene extends Scene {
         const blue = hex_color("#0000ff");
         const red = hex_color("#ff0000");
         let model_transform = Mat4.identity();
+      
+        let player_transform = this.player.getPosition(t);
+
+        this.shapes.player.draw(context, program_state, player_transform, this.materials.test.override({color: yellow}));
 
         // background
         this.make_background(context, program_state);
