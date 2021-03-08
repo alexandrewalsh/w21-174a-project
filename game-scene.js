@@ -1,8 +1,10 @@
 import {defs, tiny} from './examples/common.js';
 
 const {
-    Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene,
+    Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene, Texture
 } = tiny;
+
+const {Cube, Axis_Arrows, Textured_Phong} = defs 
 
 export class GameScene extends Scene {
     constructor() {
@@ -18,7 +20,18 @@ export class GameScene extends Scene {
             track: new defs.Cube(),
             hurdle: new defs.Cube(),
             blockade: new defs.Cube(),
+            background: new Cube(),
         };
+
+        //partitions texture into fourths of a face
+        this.shapes.background.arrays.texture_coord = [
+            new Vector([0,0]), new Vector([2,0]), new Vector([0,2]), new Vector([2,2]),
+            new Vector([0,0]), new Vector([2,0]), new Vector([0,2]), new Vector([2,2]),
+            new Vector([0,0]), new Vector([2,0]), new Vector([0,2]), new Vector([2,2]),
+            new Vector([0,0]), new Vector([2,0]), new Vector([0,2]), new Vector([2,2]),
+            new Vector([0,0]), new Vector([2,0]), new Vector([0,2]), new Vector([2,2]),
+            new Vector([0,0]), new Vector([2,0]), new Vector([0,2]), new Vector([2,2]),
+        ];
 
         // *** Materials
         this.materials = {
@@ -27,32 +40,41 @@ export class GameScene extends Scene {
             test2: new Material(new Gouraud_Shader(),
                 {ambient: .4, diffusivity: .6, color: hex_color("#992828")}),
             ring: new Material(new Ring_Shader()),
-            // TODO:  Fill in as many additional material objects as needed in this key/value table.
-            //        (Requirement 4)
+            background: new Material(new defs.Phong_Shader(), {
+                ambient: .4, 
+                diffusivity: .6, 
+                color: hex_color("#87ceff")
+            }),
+            texture_vader: new Material(new Texture_Scroll_X(), {
+                color: hex_color("#000000"),
+                ambient: .5, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/vader.png"),
+                min_filter: "LINEAR_MINMAP_FILTERING"
+            }),
         }
+
+        this.spin = 0;
+        this.bg = Mat4.translation(4,0,0);
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
     }
 
     make_control_panel() {
-        // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
-        this.key_triggered_button("View solar system", ["Control", "0"], () => this.attached = () => this.initial_camera_location);
-        this.new_line();
-        this.key_triggered_button("Attach to planet 1", ["Control", "1"], () => this.attached = () => this.planet_1);
-        this.key_triggered_button("Attach to planet 2", ["Control", "2"], () => this.attached = () => this.planet_2);
-        this.new_line();
-        this.key_triggered_button("Attach to planet 3", ["Control", "3"], () => this.attached = () => this.planet_3);
-        this.key_triggered_button("Attach to planet 4", ["Control", "4"], () => this.attached = () => this.planet_4);
-        this.new_line();
-        this.key_triggered_button("Attach to moon", ["Control", "m"], () => this.attached = () => this.moon);
+        this.key_triggered_button("Cube rotation", ["c"], () => this.spin ^= 1);
     }
-// takes speed makes a hurdle on the track moving at set speed
+    
+    // takes speed makes a hurdle on the track moving at set speed
     make_hurdle(speed, context, program_state) {
         let hurdle_transform = Mat4.identity();
         hurdle_transform = hurdle_transform.times(Mat4.translation(-1, 1.5, -40));
         hurdle_transform = hurdle_transform.times(Mat4.translation(0, 0, speed % 60));
         hurdle_transform = hurdle_transform.times(Mat4.scale(1, 1, 0.5));
         this.shapes.hurdle.draw(context, program_state, hurdle_transform, this.materials.test);
+    }
+
+    make_background(context, program_state) {
+        let bg_transform = Mat4.identity().times(Mat4.scale(1,1,1)).times(Mat4.translation(4,0,0));
+        this.shapes.background.draw(context, program_state, bg_transform, this.materials.texture_vader);
     }
 
     display(context, program_state) {
@@ -67,19 +89,24 @@ export class GameScene extends Scene {
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, .1, 1000);
 
-        // TODO: Lighting (Requirement 2)
         const light_position = vec4(0, 5, 5, 1);
         program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 1000)];
 
-        // TODO:  Fill in matrix operations and drawing code to draw the solar system scene (Requirements 3 and 4)
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
+        let t_2 = (t % (2 * Math.PI));
         const blue = hex_color("#0000ff");
         const red = hex_color("#ff0000");
         let model_transform = Mat4.identity();
 
+        this.bg.post_multiply(Mat4.rotation(this.spin * dt * 20 / 60 * 2 * Math.PI, 0, 1, 0));
+
         this.shapes.sphere.draw(context, program_state, model_transform, this.materials.test);
 
+        model_transform = this.bg;
+        this.shapes.background.draw(context, program_state, model_transform, this.materials.texture_vader);
+
         let track_one_transform = Mat4.identity();
+
         // draw left track
         track_one_transform = track_one_transform.times(Mat4.translation(-1, 0, 0));
         track_one_transform = track_one_transform.times(Mat4.translation(0, 0, -10));
@@ -89,6 +116,7 @@ export class GameScene extends Scene {
 
         let spacing_1 = 10;
         let speed_1 = 6;
+
         // draw right track
         track_one_transform = track_one_transform.times(Mat4.translation(2, 0, 0));
         this.shapes.track.draw(context, program_state, track_one_transform, this.materials.test.override({color: red}));
@@ -135,12 +163,34 @@ export class GameScene extends Scene {
         lhurdle_1b_transform = lhurdle_1b_transform.times(Mat4.translation(0, 0, (speed_1*t - 2 * spacing_1) % 60));
         lhurdle_1b_transform = lhurdle_1b_transform.times(Mat4.scale(1, 1, 0.5));
         this.shapes.hurdle.draw(context, program_state, lhurdle_1b_transform, this.materials.test.override({color: red}));
+
+        //this.make_background(context, program_state);
+    }
+}
+
+class Texture_Scroll_X extends Textured_Phong {
+    fragment_glsl_code() {
+        return this.shared_glsl_code() + `
+            varying vec2 f_tex_coord;
+            uniform sampler2D texture;
+            uniform float animation_time;
+            
+            void main(){
+                float speed = mod (animation_time * 2.0, 128.0);
+
+                // Sample the texture image in the correct place:
+                vec4 tex_color = texture2D( texture, vec2(f_tex_coord.x - speed, f_tex_coord.y));
+                if( tex_color.w < .01 ) discard;
+                                                                         // Compute an initial (ambient) color:
+                gl_FragColor = vec4( ( tex_color.xyz + shape_color.xyz ) * ambient, shape_color.w * tex_color.w ); 
+                                                                         // Compute the final color with contributions from lights:
+                gl_FragColor.xyz += phong_model_lights( normalize( N ), vertex_worldspace );
+        } `;
     }
 }
 
 class Gouraud_Shader extends Shader {
     // This is a Shader using Phong_Shader as template
-    // TODO: Modify the glsl coder here to create a Gouraud Shader (Planet 2)
 
     constructor(num_lights = 2) {
         super();

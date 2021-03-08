@@ -753,7 +753,8 @@ const Textured_Phong = defs.Textured_Phong =
             return this.shared_glsl_code() + `
                 varying vec2 f_tex_coord;
                 uniform sampler2D texture;
-        
+                uniform float animation_time;
+                
                 void main(){
                     // Sample the texture image in the correct place:
                     vec4 tex_color = texture2D( texture, f_tex_coord );
@@ -768,7 +769,8 @@ const Textured_Phong = defs.Textured_Phong =
         update_GPU(context, gpu_addresses, gpu_state, model_transform, material) {
             // update_GPU(): Add a little more to the base class's version of this method.
             super.update_GPU(context, gpu_addresses, gpu_state, model_transform, material);
-
+            // Updated for assignment 2
+            context.uniform1f(gpu_addresses.animation_time, gpu_state.animation_time / 1000);
             if (material.texture && material.texture.ready) {
                 // Select texture unit 0 for the fragment shader Sampler2D uniform called "texture":
                 context.uniform1i(gpu_addresses.texture, 0);
@@ -777,6 +779,7 @@ const Textured_Phong = defs.Textured_Phong =
             }
         }
     }
+
 
 
 const Fake_Bump_Map = defs.Fake_Bump_Map =
