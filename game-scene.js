@@ -100,7 +100,7 @@ export class GameScene extends Scene {
       
         let player_transform = this.player.getPosition(t);
 
-        this.shapes.player.draw(context, program_state, player_transform, this.materials.test.override({color: yellow}));
+        this.shapes.player.draw(context, program_state, player_transform, this.materials.test);
 
         // background
         this.make_background(context, program_state);
