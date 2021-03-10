@@ -48,7 +48,7 @@ export class GameScene extends Scene {
     }
   
     // takes array of type of obstacles, draws obstacles
-    draw_obstacles(obstacle_transform, context, program_state, t) {
+    draw_obstacles(array, obstacle_transform, context, program_state, t) {
         let track_length = 120;
         let spacing = 20;
         let speed = 5;
@@ -61,8 +61,17 @@ export class GameScene extends Scene {
         var i = min_index;
         for(i; i <= max_index; i++) {
              obstacle_transform = obstacle_transform.times(Mat4.translation(0, 0, -i * spacing));
-             this.shapes.hurdle.draw(context, program_state, obstacle_transform, this.materials.red);
-             obstacle_transform = obstacle_transform.times(Mat4.translation(0, 0, i * spacing));
+             if(array[i][0] == "h") {
+                 this.shapes.hurdle.draw(context, program_state, obstacle_transform, this.materials.red);
+             }
+            if(array[i][0] == "b") {
+                obstacle_transform = obstacle_transform.times(Mat4.scale(1, 2, 1));
+                obstacle_transform = obstacle_transform.times(Mat4.translation(0, .5, 0));
+                this.shapes.blockade.draw(context, program_state, obstacle_transform, this.materials.blue);
+                obstacle_transform = obstacle_transform.times(Mat4.translation(0, -.5, 0));
+                obstacle_transform = obstacle_transform.times(Mat4.scale(1, 0.5, 1));
+            }
+            obstacle_transform = obstacle_transform.times(Mat4.translation(0, 0, i * spacing));
         }
     }
 
@@ -131,10 +140,16 @@ export class GameScene extends Scene {
         let track_two_transform = track_one_transform.times(Mat4.translation(2, 0, 0));
         this.shapes.track.draw(context, program_state, track_two_transform, this.materials.red);
 
+        let obstacle_array = [["h", "r"],["b","r"],["h","r"],["b","r"],["h","r"],["h","r"],
+            ["h","r"],["h","r"],["h","r"],["h","r"],["h","r"],["h","r"],["h","r"],["b","r"],
+            ["h","r"],["b","r"],["h","r"],["h","r"], ["h","r"],["h","r"],["h","r"],["h","r"],
+            ["h","r"],["h","r"],["h","r"],["b","r"],["h","r"],["b","r"],["h","r"],["h","r"],
+            ["h","r"],["h","r"],["h","r"],["h","r"],["h","r"],["h","r"],["h","r"]];
+
         let hurdle_transform = Mat4.identity();
         hurdle_transform = hurdle_transform.times(Mat4.translation(-1.5, 1.5, -20));
         hurdle_transform = hurdle_transform.times(Mat4.scale(1.5, 1, 0.5));
-        this.draw_obstacles(hurdle_transform, context, program_state, t);
+        this.draw_obstacles(obstacle_array, hurdle_transform, context, program_state, t);
 
         // // make rhurdle_1a
         // let rhurdle_1a_transform = Mat4.identity();
