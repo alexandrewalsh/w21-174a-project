@@ -58,7 +58,7 @@ export class GameScene extends Scene {
                 diffusivity: .6,
                 color: hex_color("#000000")}),
             tron_board_scroll: new Material(new Texture_Scroll_Y(), {
-                texture: new Texture("assets/mc_rail.jpg"),
+                texture: new Texture("assets/tron_board.jpg"),
                 ambient: .4,
                 diffusivity: .6,
                 color: hex_color("#000000")}),
@@ -123,9 +123,9 @@ export class GameScene extends Scene {
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, .1, 1000);
 
-        const light_position = vec4(-5, 5, 5, 1);
+        const light_position = vec4(-5, 5, 0, 1);
         const og_light = new Light(light_position, color(1, 1, 1, 1), 1000);
-        const light_position2 = vec4(5, 5, 5, 1);
+        const light_position2 = vec4(5, 5, 0, 1);
         const og2_light = new Light(light_position2, color(1, 1, 1, 1), 1000);
         program_state.lights = [og_light,og2_light];
 
