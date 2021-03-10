@@ -47,13 +47,23 @@ export class GameScene extends Scene {
         this.player = new Player();
     }
   
-    // takes speed makes a hurdle on the track moving at set speed
-    make_hurdle(speed, context, program_state) {
-        let hurdle_transform = Mat4.identity();
-        hurdle_transform = hurdle_transform.times(Mat4.translation(-1, 1.5, -40));
-        hurdle_transform = hurdle_transform.times(Mat4.translation(0, 0, speed % 60));
-        hurdle_transform = hurdle_transform.times(Mat4.scale(1, 1, 0.5));
-        this.shapes.hurdle.draw(context, program_state, hurdle_transform, this.materials.test);
+    // takes array of type of obstacles, draws obstacles
+    draw_obstacles(obstacle_transform, context, program_state, t) {
+        let track_length = 120;
+        let spacing = 20;
+        let speed = 5;
+        let min_index = Math.floor(t);
+        let max_index = Math.floor((t + track_length)/spacing);
+
+        obstacle_transform = obstacle_transform.times(Mat4.translation(0, 0, speed * t));
+        this.shapes.hurdle.draw(context, program_state, obstacle_transform, this.materials.blue);
+
+        var i = min_index;
+        for(i; i <= max_index; i++) {
+             obstacle_transform = obstacle_transform.times(Mat4.translation(0, 0, -i * spacing));
+             this.shapes.hurdle.draw(context, program_state, obstacle_transform, this.materials.red);
+             obstacle_transform = obstacle_transform.times(Mat4.translation(0, 0, i * spacing));
+        }
     }
 
     make_background(context, program_state) {
@@ -108,9 +118,9 @@ export class GameScene extends Scene {
 
         // draw left track
         let track_one_transform = Mat4.identity()
-                                    .times(Mat4.translation(-1, 0, 0))
+                                    .times(Mat4.translation(-1.5, 0, 0))
                                     .times(Mat4.translation(0, 0, -10))
-                                    .times(Mat4.scale(1, 0.5, 30));
+                                    .times(Mat4.scale(1.5, 0.5, 30));
         
         this.shapes.track.draw(context, program_state, track_one_transform, this.materials.blue);
 
@@ -121,48 +131,52 @@ export class GameScene extends Scene {
         let track_two_transform = track_one_transform.times(Mat4.translation(2, 0, 0));
         this.shapes.track.draw(context, program_state, track_two_transform, this.materials.red);
 
-        // make rhurdle_1a
-        //make_hurdle(6, context, program_state);
-        let rhurdle_1a_transform = Mat4.identity();
-        rhurdle_1a_transform = rhurdle_1a_transform.times(Mat4.translation(-1, 1.5, -40));
-        rhurdle_1a_transform = rhurdle_1a_transform.times(Mat4.translation(0, 0, (speed_1*t) % 60));
-        rhurdle_1a_transform = rhurdle_1a_transform.times(Mat4.scale(1, 1, 0.5));
-        this.shapes.hurdle.draw(context, program_state, rhurdle_1a_transform, this.materials.red);
+        let hurdle_transform = Mat4.identity();
+        hurdle_transform = hurdle_transform.times(Mat4.translation(-1.5, 1.5, -20));
+        hurdle_transform = hurdle_transform.times(Mat4.scale(1.5, 1, 0.5));
+        this.draw_obstacles(hurdle_transform, context, program_state, t);
 
-        // make rblockade_1a
-        let rblockade_1a_transform = Mat4.identity();
-        rblockade_1a_transform = rblockade_1a_transform.times(Mat4.translation(-1, 2.5, -40));
-        rblockade_1a_transform = rblockade_1a_transform.times(Mat4.translation(0, 0, (speed_1*t - spacing_1) % 60));
-        rblockade_1a_transform = rblockade_1a_transform.times(Mat4.scale(1, 3, 0.5));
-        this.shapes.blockade.draw(context, program_state, rblockade_1a_transform, this.materials.blue);
-
-        // make rblockade_1b
-        let rblockade_1b_transform = Mat4.identity();
-        rblockade_1b_transform = rblockade_1b_transform.times(Mat4.translation(-1, 2.5, -40));
-        rblockade_1b_transform = rblockade_1b_transform.times(Mat4.translation(0, 0, (speed_1*t - 4 * spacing_1) % 60));
-        rblockade_1b_transform = rblockade_1b_transform.times(Mat4.scale(1, 3, 0.5));
-        this.shapes.blockade.draw(context, program_state, rblockade_1b_transform, this.materials.blue);
-
-        // make lblockade_1a
-        let lblockade_1a_transform = Mat4.identity();
-        lblockade_1a_transform = lblockade_1a_transform.times(Mat4.translation(1, 2.5, -40));
-        lblockade_1a_transform = lblockade_1a_transform.times(Mat4.translation(0, 0, (speed_1*t - 3 * spacing_1) % 60));
-        lblockade_1a_transform = lblockade_1a_transform.times(Mat4.scale(1, 3, 0.5));
-        this.shapes.blockade.draw(context, program_state, lblockade_1a_transform, this.materials.blue);
-
-        // make lhurdle_1a
-        let lhurdle_1a_transform = Mat4.identity();
-        lhurdle_1a_transform = lhurdle_1a_transform.times(Mat4.translation(1, 1.5, -40));
-        lhurdle_1a_transform = lhurdle_1a_transform.times(Mat4.translation(0, 0, (speed_1*t) % 60));
-        lhurdle_1a_transform = lhurdle_1a_transform.times(Mat4.scale(1, 1, 0.5));
-        this.shapes.hurdle.draw(context, program_state, lhurdle_1a_transform, this.materials.red);
-
-        // make lhurdle_1b
-        let lhurdle_1b_transform = Mat4.identity();
-        lhurdle_1b_transform = lhurdle_1b_transform.times(Mat4.translation(1, 1.5, -40));
-        lhurdle_1b_transform = lhurdle_1b_transform.times(Mat4.translation(0, 0, (speed_1*t - 2 * spacing_1) % 60));
-        lhurdle_1b_transform = lhurdle_1b_transform.times(Mat4.scale(1, 1, 0.5));
-        this.shapes.hurdle.draw(context, program_state, lhurdle_1b_transform, this.materials.red);
+        // // make rhurdle_1a
+        // let rhurdle_1a_transform = Mat4.identity();
+        // rhurdle_1a_transform = rhurdle_1a_transform.times(Mat4.translation(-1.5, 1.5, -40));
+        // rhurdle_1a_transform = rhurdle_1a_transform.times(Mat4.translation(0, 0, (speed_1*t) % 60));
+        // rhurdle_1a_transform = rhurdle_1a_transform.times(Mat4.scale(1.5, 1, 0.5));
+        // this.shapes.hurdle.draw(context, program_state, rhurdle_1a_transform, this.materials.red);
+        //
+        // // make rblockade_1a
+        // let rblockade_1a_transform = Mat4.identity();
+        // rblockade_1a_transform = rblockade_1a_transform.times(Mat4.translation(-1.5, 2.5, -40));
+        // rblockade_1a_transform = rblockade_1a_transform.times(Mat4.translation(0, 0, (speed_1*t - spacing_1) % 60));
+        // rblockade_1a_transform = rblockade_1a_transform.times(Mat4.scale(1.5, 3, 0.5));
+        // this.shapes.blockade.draw(context, program_state, rblockade_1a_transform, this.materials.blue);
+        //
+        // // make rblockade_1b
+        // let rblockade_1b_transform = Mat4.identity();
+        // rblockade_1b_transform = rblockade_1b_transform.times(Mat4.translation(-1.5, 2.5, -40));
+        // rblockade_1b_transform = rblockade_1b_transform.times(Mat4.translation(0, 0, (speed_1*t - 4 * spacing_1) % 60));
+        // rblockade_1b_transform = rblockade_1b_transform.times(Mat4.scale(1.5, 3, 0.5));
+        // this.shapes.blockade.draw(context, program_state, rblockade_1b_transform, this.materials.blue);
+        //
+        // // make lblockade_1a
+        // let lblockade_1a_transform = Mat4.identity();
+        // lblockade_1a_transform = lblockade_1a_transform.times(Mat4.translation(1.5, 2.5, -40));
+        // lblockade_1a_transform = lblockade_1a_transform.times(Mat4.translation(0, 0, (speed_1*t - 3 * spacing_1) % 60));
+        // lblockade_1a_transform = lblockade_1a_transform.times(Mat4.scale(1.5, 3, 0.5));
+        // this.shapes.blockade.draw(context, program_state, lblockade_1a_transform, this.materials.blue);
+        //
+        // // make lhurdle_1a
+        // let lhurdle_1a_transform = Mat4.identity();
+        // lhurdle_1a_transform = lhurdle_1a_transform.times(Mat4.translation(1.5, 1.5, -40));
+        // lhurdle_1a_transform = lhurdle_1a_transform.times(Mat4.translation(0, 0, (speed_1*t) % 60));
+        // lhurdle_1a_transform = lhurdle_1a_transform.times(Mat4.scale(1.5, 1, 0.5));
+        // this.shapes.hurdle.draw(context, program_state, lhurdle_1a_transform, this.materials.red);
+        //
+        // // make lhurdle_1b
+        // let lhurdle_1b_transform = Mat4.identity();
+        // lhurdle_1b_transform = lhurdle_1b_transform.times(Mat4.translation(1.5, 1.5, -40));
+        // lhurdle_1b_transform = lhurdle_1b_transform.times(Mat4.translation(0, 0, (speed_1*t - 2 * spacing_1) % 60));
+        // lhurdle_1b_transform = lhurdle_1b_transform.times(Mat4.scale(1.5, 1, 0.5));
+        // this.shapes.hurdle.draw(context, program_state, lhurdle_1b_transform, this.materials.red);
     }
 }
 
