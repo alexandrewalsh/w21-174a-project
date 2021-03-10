@@ -96,6 +96,7 @@ export class GameScene extends Scene {
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
         const blue = hex_color("#0000ff");
         const red = hex_color("#ff0000");
+        const yellow = hex_color("ffff00");
         let model_transform = Mat4.identity();
       
         let player_transform = this.player.getPosition(t);
