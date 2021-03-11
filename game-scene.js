@@ -76,6 +76,9 @@ export class GameScene extends Scene {
         }
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
+
+        this.music = new Audio('assets/Often(1.25x).mp3');
+        this.music.volume = 1;
         
         this.player = new Player();
     }
@@ -108,7 +111,11 @@ export class GameScene extends Scene {
         this.new_line();
         this.key_triggered_button("Jump", ["y"], function () {
             this.player.jump();
+            this.music.play();
         });
+        this.new_line();
+        this.key_triggered_button("Play/Pause Music", ["m"],
+            () => {if (this.music.paused) this.music.play(); else this.music.pause();});
     }
 
     display(context, program_state) {
