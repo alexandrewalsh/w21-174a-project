@@ -57,10 +57,17 @@ export class GameScene extends Scene {
                 ambient: .4,
                 diffusivity: .6,
                 color: hex_color("#000000")}),
-            tron_board_scroll: new Material(new Texture_Scroll_Y(), {
-                texture: new Texture("assets/tron_board.jpg"),
-                ambient: .4,
-                diffusivity: .6,
+            blue_light_scroll: new Material(new Texture_Scroll_Y(), {
+                texture: new Texture("assets/blue_light.png"),
+                specularity: 1,
+                ambient: 1,
+                diffusivity: 1,
+                color: hex_color("#000000")}),
+            red_light_scroll: new Material(new Texture_Scroll_Y(), {
+                texture: new Texture("assets/red_light.png"),
+                specularity: 1,
+                ambient: 1,
+                diffusivity: 1,
                 color: hex_color("#000000")}),
             tron_hal: new Material(new Textured_Phong(), {
                 texture: new Texture("assets/tron_hal.jpg"),
@@ -77,8 +84,8 @@ export class GameScene extends Scene {
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
 
-        this.music = new Audio('assets/Often(1.25x).mp3');
-        this.music.volume = 1;
+        //this.music = new Audio('assets/Often(1.25x).mp3');
+        //this.music.volume = 1;
         
         this.player = new Player();
     }
@@ -111,11 +118,11 @@ export class GameScene extends Scene {
         this.new_line();
         this.key_triggered_button("Jump", ["y"], function () {
             this.player.jump();
-            this.music.play();
+            //this.music.play();
         });
         this.new_line();
-        this.key_triggered_button("Play/Pause Music", ["m"],
-            () => {if (this.music.paused) this.music.play(); else this.music.pause();});
+        //this.key_triggered_button("Play/Pause Music", ["m"],
+        //    () => {if (this.music.paused) this.music.play(); else this.music.pause();});
     }
 
     display(context, program_state) {
@@ -130,11 +137,11 @@ export class GameScene extends Scene {
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, .1, 1000);
 
-        const light_position = vec4(-5, 5, 0, 1);
+        const light_position = vec4(0, 15, 0, 1);
         const og_light = new Light(light_position, color(1, 1, 1, 1), 1000);
-        const light_position2 = vec4(5, 5, 0, 1);
+        const light_position2 = vec4(0, 0, 0, 1);
         const og2_light = new Light(light_position2, color(1, 1, 1, 1), 1000);
-        program_state.lights = [og_light,og2_light];
+        program_state.lights = [og2_light];
 
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
         const blue = hex_color("#0000ff");
@@ -154,14 +161,14 @@ export class GameScene extends Scene {
                                     .times(Mat4.translation(0, 0, -10))
                                     .times(Mat4.scale(1, 0.5, 30));
         
-        this.shapes.track.draw(context, program_state, track_one_transform, this.materials.tron_board_scroll);
+        this.shapes.track.draw(context, program_state, track_one_transform, this.materials.blue_light_scroll);
 
         let spacing_1 = 10;
         let speed_1 = 6;
 
         // draw right track
         let track_two_transform = track_one_transform.times(Mat4.translation(2, 0, 0));
-        this.shapes.track.draw(context, program_state, track_two_transform, this.materials.tron_board_scroll);
+        this.shapes.track.draw(context, program_state, track_two_transform, this.materials.red_light_scroll);
 
         // make rhurdle_1a
         //make_hurdle(6, context, program_state);
