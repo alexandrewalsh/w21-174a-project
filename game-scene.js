@@ -45,10 +45,22 @@ export class GameScene extends Scene {
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
         
         this.player = new Player();
+
+        this.status = "waiting";
+        this.start_time = 0;
     }
   
     // takes array of type of obstacles, draws obstacles
     draw_obstacles(array, obstacle_transform, context, program_state, t) {
+        if (this.status == "waiting") {
+            return;
+        } else if (this.status == "init") {
+            this.start_time = t;
+            this.status = "playing";
+        }
+        
+        t = t - this.start_time;
+
         let track_length = 120;
         let spacing = 30;
         let speed = 45;
@@ -121,6 +133,9 @@ export class GameScene extends Scene {
         });
         this.new_line();
         this.key_triggered_button("Jump", ["y"], function () {
+            if (this.status == "waiting") {
+                this.status = "init";
+            }
             this.player.jump();
         });
     }
