@@ -26,23 +26,97 @@ export class GameScene extends Scene {
             player: new defs.Cube(),
         };
 
+        this.shapes.track.arrays.texture_coord = [
+            new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), //bottom
+            new Vector([0,0]), new Vector([1,0]), new Vector([0,30]), new Vector([1,30]), //top
+            new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), //left
+            new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), //right
+            new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), //front
+            new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), //back
+        ];
+
+        this.shapes.blockade.arrays.texture_coord = [
+            new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), //bottom
+            new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), //top
+            new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), //left
+            new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), //right
+            new Vector([0,0]), new Vector([1,0]), new Vector([0,2]), new Vector([1,2]), //front
+            new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), //back
+        ];
+
+        this.shapes.hurdle.arrays.texture_coord = [
+            new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), //bottom
+            new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), //top
+            new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), //left
+            new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), //right
+            new Vector([0,0]), new Vector([1,0]), new Vector([0,1]), new Vector([1,1]), //front
+            new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), //back
+        ];
+
         // *** Materials
         this.materials = {
             test: new Material(new defs.Phong_Shader(),
-                {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
+                {ambient: .4, diffusivity: .6, color: hex_color("#ffff00")}),
             red: new Material(new defs.Phong_Shader(),
                 {ambient: .4, diffusivity: .6, color: hex_color("#ff0000")}),
             blue: new Material(new defs.Phong_Shader(),
                 {ambient: .4, diffusivity: .6, color: hex_color("#0000ff")}),
+            tron_board: new Material(new Textured_Phong(), {
+                texture: new Texture("assets/tron_board.jpg"),
+                ambient: .4,
+                diffusivity: .6,
+                color: hex_color("#000000")}),
+            red_hurdle: new Material(new Textured_Phong(), {
+                texture: new Texture("assets/red_hurdle.png"),
+                ambient: .4,
+                diffusivity: .6,
+                luminosity: 1,
+                color: hex_color("#000000")}),
+            blue_hurdle: new Material(new Textured_Phong(), {
+                texture: new Texture("assets/blue_hurdle.png"),
+                ambient: .4,
+                diffusivity: .6,
+                luminosity: .5,
+                color: hex_color("#000000")}),
+            red_blockade: new Material(new Textured_Phong(), {
+                texture: new Texture("assets/red_blockade.png"),
+                ambient: .4,
+                diffusivity: .6,
+                color: hex_color("#000000")}),
+            blue_blockade: new Material(new Textured_Phong(), {
+                texture: new Texture("assets/blue_blockade.png"),
+                ambient: .4,
+                diffusivity: .6,
+                color: hex_color("#000000")}),
+            blue_light_scroll: new Material(new Texture_Scroll_Y(), {
+                texture: new Texture("assets/blue_nobg.png"),
+                specularity: 1,
+                ambient: 1,
+                diffusivity: 1,
+                color: hex_color("#000000")}),
+            red_light_scroll: new Material(new Texture_Scroll_Y(), {
+                texture: new Texture("assets/red_nobg.png"),
+                specularity: 1,
+                ambient: 1,
+                diffusivity: 1,
+                color: hex_color("#000000")}),
+            tron_hal: new Material(new Textured_Phong(), {
+                texture: new Texture("assets/tron_hal.jpg"),
+                ambient: .4,
+                diffusivity: .6,
+                color: hex_color("#000000")}),
             bg_texture: new Material(new Texture_Scroll_Y(), {
                 ambient: .5, diffusivity: 0.1, specularity: 0.1,
-                texture: new Texture("assets/milkyway.png"),
+                texture: new Texture("assets/tron.jpg"),
                 min_filter: "LINEAR_MINMAP_FILTERING",
                 color: hex_color("#000000")
             }),
         }
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
+
+        //this.music = new Audio('assets/Often(1.25x).mp3');
+        //this.music.volume = 1;
         
         this.player = new Player();
 
@@ -137,7 +211,11 @@ export class GameScene extends Scene {
                 this.status = "init";
             }
             this.player.jump();
+            //this.music.play();
         });
+        this.new_line();
+        //this.key_triggered_button("Play/Pause Music", ["m"],
+        //    () => {if (this.music.paused) this.music.play(); else this.music.pause();});
     }
 
     display(context, program_state) {
@@ -152,18 +230,20 @@ export class GameScene extends Scene {
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, .1, 1000);
 
-        const light_position = vec4(0, 5, 5, 1);
-        program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 1000)];
+        const light_position = vec4(0, 11, 20, 1);
+        const og_light = new Light(light_position, color(1, 1, 1, 1), 1000);
+        const light_position2 = vec4(0, 0, 0, 1);
+        const og2_light = new Light(light_position2, color(1, 1, 1, 1), 1000);
+        program_state.lights = [og_light];
 
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
         const blue = hex_color("#0000ff");
         const red = hex_color("#ff0000");
-        const yellow = hex_color("ffff00");
         let model_transform = Mat4.identity();
       
         let player_transform = this.player.getPosition(t);
 
-        this.shapes.player.draw(context, program_state, player_transform, this.materials.test);
+        this.shapes.player.draw(context, program_state, player_transform, this.materials.tron_hal);
 
         // background
         this.make_background(context, program_state);
@@ -174,11 +254,11 @@ export class GameScene extends Scene {
                                     .times(Mat4.translation(0, 0, -10))
                                     .times(Mat4.scale(1.5, 0.5, 30));
         
-        this.shapes.track.draw(context, program_state, track_one_transform, this.materials.blue);
+        this.shapes.track.draw(context, program_state, track_one_transform, this.materials.blue_light_scroll);
 
         // draw right track
         let track_two_transform = track_one_transform.times(Mat4.translation(2, 0, 0));
-        this.shapes.track.draw(context, program_state, track_two_transform, this.materials.red);
+        this.shapes.track.draw(context, program_state, track_two_transform, this.materials.red_light_scroll);
 
         let obstacle_array = [  ["-", "-"], ["-", "-"], ["-", "-"], ["h", "b"], ["b", "l"], ["h", "b"], ["b", "l"], ["h", "l"], 
                                 ["h", "r"], ["h", "r"], ["h", "r"], ["h", "r"], ["h", "r"], ["h", "r"], ["h", "r"], ["h", "r"], 
@@ -190,11 +270,15 @@ export class GameScene extends Scene {
         obstacle_transform = obstacle_transform.times(Mat4.translation(-1.5, 1.5, -40));
         obstacle_transform = obstacle_transform.times(Mat4.scale(1.5, 1, 0.5));
         this.draw_obstacles(obstacle_array, obstacle_transform, context, program_state, t);
-
     }
 }
 
 class Texture_Scroll_Y extends Textured_Phong {
+    constructor(speed = 3) {
+        super();
+        this.speed = speed;
+    }
+
     fragment_glsl_code() {
         return this.shared_glsl_code() + `
             varying vec2 f_tex_coord;
@@ -202,7 +286,8 @@ class Texture_Scroll_Y extends Textured_Phong {
             uniform float animation_time;
             
             void main(){
-                float speed = mod (animation_time * 2.0, 128.0);
+                const int SPEED = ` + this.speed + `;
+                float speed = mod (animation_time * float(SPEED), 128.0);    //SPEED * t % 128
 
                 // Sample the texture image in the correct place:
                 vec4 tex_color = texture2D( texture, vec2(f_tex_coord.x, f_tex_coord.y - speed));
