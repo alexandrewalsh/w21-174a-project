@@ -122,6 +122,8 @@ export class GameScene extends Scene {
 
         this.status = "waiting";
         this.start_time = 0;
+
+        this.track_length = 40;
     }
   
     // takes array of type of obstacles, draws obstacles
@@ -135,17 +137,25 @@ export class GameScene extends Scene {
         
         t = t - this.start_time;
 
-        let track_length = 120;
         let spacing = 30;
         let speed = 45;
-        //let min_index = Math.floor(t);
-        //let max_index = Math.floor((t + track_length)/spacing);
+        
+        // Min index is the earliest object still in front of the camera
+        //  Objects begin at: track_length + ~70 + spacing * index in front of camera, thus it
+        //  takes (track_length + 10 + spacing*index) / speed seconds to pass camera. If t > this value, don't draw
+        let min_index = Math.max(0,  Math.round((t*speed - this.track_length - 70)/spacing)  );
+        
+        // Max index is the latest object within a reasonable distance to the camera
+        // Objects shouldn't be drawn until they are at position track_length
+        // Objects start at position track_length + spacing * index, and need to reach position track_length
+        // This traversal takes time t = spacing * index / speed. If t < this value, don't draw this object
+        let max_index = Math.min(array.length - 1, Math.ceil(t * speed / spacing));
 
         obstacle_transform = obstacle_transform.times(Mat4.translation(0, 0, speed * t));
         //this.shapes.hurdle.draw(context, program_state, obstacle_transform, this.materials.blue);
 
-        var i = 0;
-        for(i; i <= 20; i++) {
+        var i = min_index;
+        for(i; i <= max_index; i++) {
              obstacle_transform = obstacle_transform.times(Mat4.translation(0, 0, -i * spacing));
              if(array[i][0] == "h") {
                  if (array[i][1] == "r") {
@@ -158,8 +168,6 @@ export class GameScene extends Scene {
                      // left hurdle
                      this.shapes.hurdle.draw(context, program_state, obstacle_transform, this.materials.blue);
                  } else{
-                     if (t < 5)
-                        console.log("Row: " + i + " contains " +  array[i][0] + ", " + array[i][1]);
                      // hurdle accross both tracks
                      this.shapes.hurdle.draw(context, program_state, obstacle_transform, this.materials.test);
                      obstacle_transform = obstacle_transform.times(Mat4.translation(2, 0, 0));
@@ -267,7 +275,7 @@ export class GameScene extends Scene {
                                 ["h", "r"], ["h", "r"], ["h", "r"], ["h", "r"], ["h", "r"], ["h", "r"], ["h", "r"], ["h", "r"]  ];
 
         let obstacle_transform = Mat4.identity();
-        obstacle_transform = obstacle_transform.times(Mat4.translation(-1.5, 1.5, -40));
+        obstacle_transform = obstacle_transform.times(Mat4.translation(-1.5, 1.5, -this.track_length));
         obstacle_transform = obstacle_transform.times(Mat4.scale(1.5, 1, 0.5));
         this.draw_obstacles(obstacle_array, obstacle_transform, context, program_state, t);
     }
