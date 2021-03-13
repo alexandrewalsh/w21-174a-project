@@ -27,21 +27,30 @@ export class GameScene extends Scene {
         };
 
         this.shapes.track.arrays.texture_coord = [
-            new Vector([0,0]), new Vector([1,0]), new Vector([0,30]), new Vector([1,30]), //bottom
+            new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), //bottom
             new Vector([0,0]), new Vector([1,0]), new Vector([0,30]), new Vector([1,30]), //top
-            new Vector([0,0]), new Vector([30,0]), new Vector([0,1]), new Vector([30,1]), //left
-            new Vector([0,0]), new Vector([30,0]), new Vector([0,1]), new Vector([30,1]), //right
-            new Vector([0,0]), new Vector([1,0]), new Vector([0,1]), new Vector([1,1]), //front
-            new Vector([0,0]), new Vector([1,0]), new Vector([0,1]), new Vector([1,1]), //back
+            new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), //left
+            new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), //right
+            new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), //front
+            new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), //back
         ];
 
         this.shapes.blockade.arrays.texture_coord = [
-            new Vector([0,0]), new Vector([1,0]), new Vector([0,1]), new Vector([1,1]), //bottom
-            new Vector([0,0]), new Vector([1,0]), new Vector([0,1]), new Vector([1,1]), //top
-            new Vector([0,0]), new Vector([1,0]), new Vector([0,1]), new Vector([1,1]), //left
-            new Vector([0,0]), new Vector([1,0]), new Vector([0,1]), new Vector([1,1]), //right
+            new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), //bottom
+            new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), //top
+            new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), //left
+            new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), //right
             new Vector([0,0]), new Vector([1,0]), new Vector([0,2]), new Vector([1,2]), //front
-            new Vector([0,0]), new Vector([1,0]), new Vector([0,1]), new Vector([1,1]), //back
+            new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), //back
+        ];
+
+        this.shapes.hurdle.arrays.texture_coord = [
+            new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), //bottom
+            new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), //top
+            new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), //left
+            new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), //right
+            new Vector([0,0]), new Vector([1,0]), new Vector([0,1]), new Vector([1,1]), //front
+            new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), //back
         ];
 
         // *** Materials
@@ -57,14 +66,36 @@ export class GameScene extends Scene {
                 ambient: .4,
                 diffusivity: .6,
                 color: hex_color("#000000")}),
+            red_hurdle: new Material(new Textured_Phong(), {
+                texture: new Texture("assets/red_hurdle.png"),
+                ambient: .4,
+                diffusivity: .6,
+                luminosity: 1,
+                color: hex_color("#000000")}),
+            blue_hurdle: new Material(new Textured_Phong(), {
+                texture: new Texture("assets/blue_hurdle.png"),
+                ambient: .4,
+                diffusivity: .6,
+                luminosity: .5,
+                color: hex_color("#000000")}),
+            red_blockade: new Material(new Textured_Phong(), {
+                texture: new Texture("assets/red_blockade.png"),
+                ambient: .4,
+                diffusivity: .6,
+                color: hex_color("#000000")}),
+            blue_blockade: new Material(new Textured_Phong(), {
+                texture: new Texture("assets/blue_blockade.png"),
+                ambient: .4,
+                diffusivity: .6,
+                color: hex_color("#000000")}),
             blue_light_scroll: new Material(new Texture_Scroll_Y(), {
-                texture: new Texture("assets/blue_light.png"),
+                texture: new Texture("assets/blue_nobg.png"),
                 specularity: 1,
                 ambient: 1,
                 diffusivity: 1,
                 color: hex_color("#000000")}),
             red_light_scroll: new Material(new Texture_Scroll_Y(), {
-                texture: new Texture("assets/red_light.png"),
+                texture: new Texture("assets/red_nobg.png"),
                 specularity: 1,
                 ambient: 1,
                 diffusivity: 1,
@@ -137,11 +168,11 @@ export class GameScene extends Scene {
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, .1, 1000);
 
-        const light_position = vec4(0, 15, 0, 1);
+        const light_position = vec4(0, 11, 20, 1);
         const og_light = new Light(light_position, color(1, 1, 1, 1), 1000);
         const light_position2 = vec4(0, 0, 0, 1);
         const og2_light = new Light(light_position2, color(1, 1, 1, 1), 1000);
-        program_state.lights = [og2_light];
+        program_state.lights = [og_light];
 
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
         const blue = hex_color("#0000ff");
@@ -176,42 +207,42 @@ export class GameScene extends Scene {
         rhurdle_1a_transform = rhurdle_1a_transform.times(Mat4.translation(-1, 1.5, -40));
         rhurdle_1a_transform = rhurdle_1a_transform.times(Mat4.translation(0, 0, (speed_1*t) % 60));
         rhurdle_1a_transform = rhurdle_1a_transform.times(Mat4.scale(1, 1, 0.5));
-        this.shapes.hurdle.draw(context, program_state, rhurdle_1a_transform, this.materials.tron_board);
+        this.shapes.hurdle.draw(context, program_state, rhurdle_1a_transform, this.materials.blue_hurdle);
 
         // make rblockade_1a
         let rblockade_1a_transform = Mat4.identity();
         rblockade_1a_transform = rblockade_1a_transform.times(Mat4.translation(-1, 2.5, -40));
         rblockade_1a_transform = rblockade_1a_transform.times(Mat4.translation(0, 0, (speed_1*t - spacing_1) % 60));
         rblockade_1a_transform = rblockade_1a_transform.times(Mat4.scale(1, 3, 0.5));
-        this.shapes.blockade.draw(context, program_state, rblockade_1a_transform, this.materials.tron_board);
+        this.shapes.blockade.draw(context, program_state, rblockade_1a_transform, this.materials.blue_blockade);
 
         // make rblockade_1b
         let rblockade_1b_transform = Mat4.identity();
         rblockade_1b_transform = rblockade_1b_transform.times(Mat4.translation(-1, 2.5, -40));
         rblockade_1b_transform = rblockade_1b_transform.times(Mat4.translation(0, 0, (speed_1*t - 4 * spacing_1) % 60));
         rblockade_1b_transform = rblockade_1b_transform.times(Mat4.scale(1, 3, 0.5));
-        this.shapes.blockade.draw(context, program_state, rblockade_1b_transform, this.materials.tron_board);
+        this.shapes.blockade.draw(context, program_state, rblockade_1b_transform, this.materials.blue_blockade);
 
         // make lblockade_1a
         let lblockade_1a_transform = Mat4.identity();
         lblockade_1a_transform = lblockade_1a_transform.times(Mat4.translation(1, 2.5, -40));
         lblockade_1a_transform = lblockade_1a_transform.times(Mat4.translation(0, 0, (speed_1*t - 3 * spacing_1) % 60));
         lblockade_1a_transform = lblockade_1a_transform.times(Mat4.scale(1, 3, 0.5));
-        this.shapes.blockade.draw(context, program_state, lblockade_1a_transform, this.materials.tron_board);
+        this.shapes.blockade.draw(context, program_state, lblockade_1a_transform, this.materials.red_blockade);
 
         // make lhurdle_1a
         let lhurdle_1a_transform = Mat4.identity();
         lhurdle_1a_transform = lhurdle_1a_transform.times(Mat4.translation(1, 1.5, -40));
         lhurdle_1a_transform = lhurdle_1a_transform.times(Mat4.translation(0, 0, (speed_1*t) % 60));
         lhurdle_1a_transform = lhurdle_1a_transform.times(Mat4.scale(1, 1, 0.5));
-        this.shapes.hurdle.draw(context, program_state, lhurdle_1a_transform, this.materials.tron_board);
+        this.shapes.hurdle.draw(context, program_state, lhurdle_1a_transform, this.materials.red_hurdle);
 
         // make lhurdle_1b
         let lhurdle_1b_transform = Mat4.identity();
         lhurdle_1b_transform = lhurdle_1b_transform.times(Mat4.translation(1, 1.5, -40));
         lhurdle_1b_transform = lhurdle_1b_transform.times(Mat4.translation(0, 0, (speed_1*t - 2 * spacing_1) % 60));
         lhurdle_1b_transform = lhurdle_1b_transform.times(Mat4.scale(1, 1, 0.5));
-        this.shapes.hurdle.draw(context, program_state, lhurdle_1b_transform, this.materials.tron_board);
+        this.shapes.hurdle.draw(context, program_state, lhurdle_1b_transform, this.materials.red_hurdle);
     }
 }
 
