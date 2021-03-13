@@ -157,19 +157,19 @@ export class GameScene extends Scene {
                  if (array[i][1] == "r") {
                      // right hurdle
                      obstacle_transform = obstacle_transform.times(Mat4.translation(2, 0, 0));
-                     this.shapes.hurdle.draw(context, program_state, obstacle_transform, this.materials.red_hurdle);
+                     this.shapes.hurdle.draw(context, program_state, obstacle_transform, this.materials.blue_hurdle);
                      obstacle_transform = obstacle_transform.times(Mat4.translation(-2, 0, 0));
                  }
                  else if (array[i][1] == "l") {
                      // left hurdle
-                     this.shapes.hurdle.draw(context, program_state, obstacle_transform, this.materials.blue_hurdle);
+                     this.shapes.hurdle.draw(context, program_state, obstacle_transform, this.materials.red_hurdle);
                  } else{
                      if (t < 5)
                         console.log("Row: " + i + " contains " +  array[i][0] + ", " + array[i][1]);
                      // hurdle accross both tracks
-                     this.shapes.hurdle.draw(context, program_state, obstacle_transform, this.materials.red_hurdle);
-                     obstacle_transform = obstacle_transform.times(Mat4.translation(2, 0, 0));
                      this.shapes.hurdle.draw(context, program_state, obstacle_transform, this.materials.blue_hurdle);
+                     obstacle_transform = obstacle_transform.times(Mat4.translation(2, 0, 0));
+                     this.shapes.hurdle.draw(context, program_state, obstacle_transform, this.materials.red_hurdle);
                      obstacle_transform = obstacle_transform.times(Mat4.translation(-2, 0, 0));
                  }
              }
@@ -242,27 +242,12 @@ export class GameScene extends Scene {
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, .1, 1000);
 
-        const light_position = vec4(0, 11, 20, 1);
-        const og_light = new Light(light_position, color(1, 1, 1, 1), 10000);
-        const light_position2 = vec4(0, 11, 10, 1);
+        const light_position = vec4(0, 2, 50, 1);
+        const og_light = new Light(light_position, color(1, 1, 1, 1), 5000);
+        const light_position2 = vec4(0, 20, -20, 1);
         const og2_light = new Light(light_position2, color(1, 1, 1, 1), 1000);
 
-        const light_position3 = vec4(0, 11, 30, 1);
-        const light3 = new Light(light_position3, color(1, 1, 1, 1), 1000);
-        const light_position4 = vec4(0, 11, -50, 1);
-        const light4 = new Light(light_position4, color(1, 1, 1, 1), 1000);
-        const light_position5 = vec4(0, 11, 50, 1);
-        const light5 = new Light(light_position5, color(1, 1, 1, 1), 1000);
-        const light_position6 = vec4(0, 11, 0, 1);
-        const light6 = new Light(light_position6, color(1, 1, 1, 1), 1000);
-        const light_position7 = vec4(0, 11, -10, 1);
-        const light7 = new Light(light_position7, color(1, 1, 1, 1), 1000);
-        const light_position8 = vec4(0, 11, -20, 1);
-        const light8 = new Light(light_position8, color(1, 1, 1, 1), 1000);
-        const light_position9 = vec4(0, 11, -30, 1);
-        const light9 = new Light(light_position9, color(1, 1, 1, 1), 1000);
-
-        program_state.lights = [og_light, og2_light, light3, light4, light5, light6, light7, light8, light9];
+        program_state.lights = [og_light];
 
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
         const blue = hex_color("#0000ff");
