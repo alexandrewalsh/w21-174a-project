@@ -87,12 +87,12 @@ export class GameScene extends Scene {
                 luminosity: .5,
                 color: hex_color("#000000")}),
             red_blockade: new Material(new Textured_Phong(), {
-                texture: new Texture("assets/red_blockade.png"),
+                texture: new Texture("assets/red_noblur.png"),
                 ambient: .4,
                 diffusivity: .6,
                 color: hex_color("#000000")}),
             blue_blockade: new Material(new Textured_Phong(), {
-                texture: new Texture("assets/blue_blockade.png"),
+                texture: new Texture("assets/blue_noblur.png"),
                 ambient: .4,
                 diffusivity: .6,
                 color: hex_color("#000000")}),
