@@ -124,6 +124,23 @@ export class GameScene extends Scene {
         this.start_time = 0;
 
         this.track_length = 40;
+        this.spacing = 30;
+        this.speed = 45;
+    }
+
+    // Min index is the earliest object still in front of the camera
+        //  Objects begin at: track_length + ~30 + spacing * index in front of camera, thus it
+        //  takes (track_length + 10 + spacing*index) / speed seconds to pass camera. If t > this value, don't draw
+    getMinIndex(t) {
+        return Math.max(0,  Math.round((t*this.speed - this.track_length - 30)/this.spacing)  );
+    }
+
+    // Max index is the latest object within a reasonable distance to the camera
+        // Objects shouldn't be drawn until they are at position track_length
+        // Objects start at position track_length + spacing * index, and need to reach position track_length
+        // This traversal takes time t = spacing * index / speed. If t < this value, don't draw this object
+    getMaxIndex(t, array) {
+        return Math.min(array.length - 1, Math.ceil(t * this.speed / this.spacing));
     }
   
     // takes array of type of obstacles, draws obstacles
@@ -137,19 +154,11 @@ export class GameScene extends Scene {
         
         t = t - this.start_time;
 
-        let spacing = 30;
-        let speed = 45;
+        let spacing = this.spacing;
+        let speed = this.speed;
         
-        // Min index is the earliest object still in front of the camera
-        //  Objects begin at: track_length + ~70 + spacing * index in front of camera, thus it
-        //  takes (track_length + 10 + spacing*index) / speed seconds to pass camera. If t > this value, don't draw
-        let min_index = Math.max(0,  Math.round((t*speed - this.track_length - 70)/spacing)  );
-        
-        // Max index is the latest object within a reasonable distance to the camera
-        // Objects shouldn't be drawn until they are at position track_length
-        // Objects start at position track_length + spacing * index, and need to reach position track_length
-        // This traversal takes time t = spacing * index / speed. If t < this value, don't draw this object
-        let max_index = Math.min(array.length - 1, Math.ceil(t * speed / spacing));
+        let min_index = this.getMinIndex(t);
+        let max_index = this.getMaxIndex(t, array);   
 
         obstacle_transform = obstacle_transform.times(Mat4.translation(0, 0, speed * t));
         //this.shapes.hurdle.draw(context, program_state, obstacle_transform, this.materials.blue);
@@ -204,6 +213,94 @@ export class GameScene extends Scene {
                             .times(Mat4.scale(20,20,50));
         this.shapes.bg_cone.draw(context, program_state, bg_transform, this.materials.bg_texture);
     }
+
+    detect_collision(t, array, player_transform) {
+        if (this.status == "waiting" || this.status == "init") {
+            return false;
+        }
+
+        t = t - this.start_time;
+
+        let start = this.getMinIndex(t);
+        let end = this.getMaxIndex(t, array);
+
+        let i = start;
+        for (i; i <= end; i++) {
+            // Get the lane and type of the current obstacle
+            let lane = array[i][1];
+            let type = array[i][0];
+            
+            // Get the height, width, depth, and position of the obstacle
+            let height, width, depth = 1;
+            let obstacle_transform = Mat4.identity()
+                                         .times(Mat4.translation(0, 1.5, -this.track_length + this.speed * t - i * this.spacing));
+
+            if (lane == "l") {
+                obstacle_transform = obstacle_transform.times(Mat4.translation(-1.5, 0, 0));
+                width = 3;
+            } else if (lane == "r") {
+                obstacle_transform = obstacle_transform.times(Mat4.translation(1.5, 0, 0));
+                width = 3;
+            } else { // Obstacle is a cross-lane hurdle
+                width = 6;
+            }
+
+            if (type == "h") {
+                height = 2;
+            } else if (type == "b") {
+                height = 4;
+                obstacle_transform = obstacle_transform.times(Mat4.translation(0, 0.5, 0));
+            } else { // Dummy obstacle
+                continue;
+            }
+            
+            let obstacle_center = obstacle_transform.times(vec4(0, 0, 0, 1)).to3();
+            let player_center = player_transform.times(vec4(0, 0, 0, 1)).to3();
+
+            // Get obstacle and player bounding dimensions
+            let o_max_x = obstacle_center[0] + width/2;
+            let o_max_y = obstacle_center[1] + height/2;
+            let o_max_z = obstacle_center[2] + depth/2;
+
+            let o_min_x = obstacle_center[0] - width/2;
+            let o_min_y = obstacle_center[1] - height/2;
+            let o_min_z = obstacle_center[2] + depth/2;
+
+            // Player
+            let p_max_x = player_center[0] + 1;
+            let p_max_y = player_center[1] + 1;
+            let p_max_z = player_center[2] + 1;
+
+            let p_min_x = player_center[0] - 1;
+            let p_min_y = player_center[1] - 1;
+            let p_min_z = player_center[2] - 1;
+
+            let collide =   (o_min_x <= p_max_x && o_max_x >= p_min_x) &&
+                            (o_min_y <= p_max_y && o_max_y >= p_min_y) &&
+                            (o_min_z <= p_max_z && o_max_z >= p_min_z);
+            /*
+            if (draw) {
+                console.log("Obstacle[" + i + "] has the following ranges:");
+                console.log("\tX: " + o_min_x + " to " + o_max_x);
+                console.log("\tY: " + o_min_y + " to " + o_max_y);
+                console.log("\tZ: " + o_min_z + " to " + o_max_z + "\n");
+            }
+
+            if (draw && i == end) {
+                console.log("Player has the following ranges:");
+                console.log("\tX: " + p_min_x + " to " + p_max_x);
+                console.log("\tY: " + p_min_y + " to " + p_max_y);
+                console.log("\tZ: " + p_min_z + " to " + p_max_z + "\n");
+            }*/
+
+            if (collide) {
+                console.log("Collided!");
+                return true;
+            }
+        }
+
+        return false;
+    } 
 
     make_control_panel() {
         // Draw the game's buttons
@@ -276,8 +373,12 @@ export class GameScene extends Scene {
 
         let obstacle_transform = Mat4.identity();
         obstacle_transform = obstacle_transform.times(Mat4.translation(-1.5, 1.5, -this.track_length));
-        obstacle_transform = obstacle_transform.times(Mat4.scale(1.5, 1, 0.5));
+        obstacle_transform = obstacle_transform.times(Mat4.scale(1.5, 1, 1));
         this.draw_obstacles(obstacle_array, obstacle_transform, context, program_state, t);
+
+        if (this.detect_collision(t, obstacle_array, player_transform)) {
+            this.shapes.torus.draw(context, program_state, Mat4.identity().times(Mat4.translation(6, 2.5, 5)), this.materials.blue);
+        }
     }
 }
 
