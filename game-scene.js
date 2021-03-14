@@ -63,11 +63,6 @@ export class GameScene extends Scene {
             blue: new Material(new defs.Phong_Shader(),
                 {ambient: .4, diffusivity: .6, color: hex_color("#0000ff")}),
             // ONLINE TRON MATERIALS //
-            tron_board: new Material(new Textured_Phong(), {
-                texture: new Texture("assets/tron_board.jpg"),
-                ambient: .4,
-                diffusivity: .6,
-                color: hex_color("#000000")}),
             tron_hal: new Material(new Textured_Phong(), {
                 texture: new Texture("assets/tron_hal.jpg"),
                 ambient: .4,
