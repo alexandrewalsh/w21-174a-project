@@ -7,7 +7,7 @@ const {
 
 const DEF_X = 1.7;
 const DEF_Y = 1.5;
-const DEF_Z = 8;
+const DEF_Z = 0;
 
 const JUMP_H = 5;
 

@@ -118,7 +118,7 @@ export class GameScene extends Scene {
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
 
-        this.music = new Audio('assets/ForceWait3Sec.mp4');
+        this.music = new Audio('assets/MHALL.mp3');
         //this.music.volume = 1;
         
         this.player = new Player();
@@ -141,9 +141,19 @@ export class GameScene extends Scene {
         
         t = t - this.start_time;
 
-        let track_length = 120;
-        let spacing = 30;
-        let speed = 45;
+        /*
+            for 105 bpm:
+            1 beat every 60/105 seconds (call this a beat time)
+            spacing for this when traveling 40 units/second:
+                    40/1 = x/(60/105)
+                    x = (60/105)*40 units/beat time 
+                traveling 240/105 units/beat time 
+
+        */
+            
+        let track_length = 40;
+        let speed = 80;
+        let spacing = 40;
         //let min_index = Math.floor(t);
         //let max_index = Math.floor((t + track_length)/spacing);
 
@@ -151,7 +161,7 @@ export class GameScene extends Scene {
         //this.shapes.hurdle.draw(context, program_state, obstacle_transform, this.materials.blue);
 
         var i = 0;
-        for(i; i <= 20; i++) {
+        for(i; i < 136; i++) {
              obstacle_transform = obstacle_transform.times(Mat4.translation(0, 0, -i * spacing));
              if(array[i][0] == "h") {
                  if (array[i][1] == "r") {
@@ -221,6 +231,7 @@ export class GameScene extends Scene {
             this.player.jump();
         });
         this.new_line();
+        this.new_line();
         this.key_triggered_button("Play/Pause Music", ["m"],
             () => {if (this.music.paused) this.music.play(); else this.music.pause();});
         this.key_triggered_button("Restart Music", ["n"],    
@@ -277,20 +288,91 @@ export class GameScene extends Scene {
             this.status = "waiting";
         }
 
-        let obstacle_array = [  ["-", "-"], ["-", "-"], ["b", "r"], 
-                                ["-", "-"], ["-", "-"], ["b", "l"], 
-                                ["-", "-"], ["-", "-"], ["h", "b"], 
-                                ["-", "-"], ["-", "-"], ["h", "b"], 
-                                ["-", "-"], ["-", "-"], ["b", "r"], 
-                                ["-", "-"], ["-", "-"], ["b", "l"],
-                                ["-", "-"], ["-", "-"], ["h", "b"], 
-                                ["-", "-"], ["-", "-"], ["h", "b"],
-                                ["-", "-"], ["-", "-"], ["h", "r"], 
-                                ["h", "r"], ["b", "r"], ["h", "r"], 
-                                ["b", "r"], ["h", "r"], ["h", "r"], 
-                                ["h", "r"], ["h", "r"], ["h", "r"], 
-                                ["h", "r"], ["h", "r"], ["h", "r"], 
-                                ["h", "r"]
+        let obstacle_array = [  ["-", "-"], ["-", "-"],
+                                ["-", "-"], ["-", "-"], 
+                                ["-", "-"], ["-", "-"],
+                                ["-", "-"], ["-", "-"], 
+                                ["-", "-"], ["-", "-"],
+
+                                ["h", "b"], ["-", "-"], // measure 1
+                                ["h", "b"], ["-", "-"], 
+                                ["h", "b"], ["-", "-"], 
+                                ["h", "b"], ["-", "-"], 
+
+                                ["b", "r"], ["-", "-"], // measure 2
+                                ["b", "l"], ["-", "-"], 
+                                ["b", "r"], ["-", "-"],
+                                ["-", "-"], ["-", "-"], 
+
+                                ["b", "l"], ["-", "-"], // measure 3
+                                ["b", "r"], ["-", "-"], 
+                                ["b", "l"], ["-", "-"], 
+                                ["-", "-"], ["-", "-"], 
+
+                                ["h", "b"], ["-", "-"], // measure 4
+                                ["h", "b"], ["-", "-"], 
+                                ["h", "b"], ["-", "-"], 
+                                ["-", "-"], ["-", "-"], 
+
+                                ["h", "b"], ["-", "-"], // measure 5
+                                ["h", "b"], ["-", "-"], 
+                                ["h", "b"], ["-", "-"], 
+                                ["h", "b"], ["-", "-"], 
+
+                                ["b", "l"], ["-", "-"], // measure 6
+                                ["b", "r"], ["-", "-"], 
+                                ["b", "l"], ["-", "-"], 
+                                ["b", "r"], ["-", "-"],
+
+                                ["b", "l"], ["-", "-"], // measure 7
+                                ["b", "r"], ["-", "-"], 
+                                ["b", "l"], ["-", "-"], 
+                                ["b", "r"], ["-", "-"], 
+
+                                ["h", "b"], ["-", "-"], // measure 8
+                                ["-", "-"], ["-", "-"], 
+                                ["-", "-"], ["-", "-"], 
+                                ["-", "-"], ["-", "-"], 
+
+                                ["b", "l"], ["-", "-"], // measure 9
+                                ["b", "r"], ["-", "-"], 
+                                ["b", "l"], ["-", "-"], 
+                                ["b", "r"], ["-", "-"], 
+
+                                ["b", "l"], ["-", "-"], // measure 10
+                                ["b", "r"], ["-", "-"], 
+                                ["b", "l"], ["-", "-"], 
+                                ["-", "-"], ["-", "-"], 
+
+                                ["b", "r"], ["-", "-"], // measure 11
+                                ["b", "l"], ["-", "-"], 
+                                ["b", "r"], ["-", "-"], 
+                                ["-", "-"], ["-", "-"], 
+
+                                ["b", "l"], ["-", "-"], // measure 12
+                                ["b", "r"], ["-", "-"], 
+                                ["b", "l"], ["-", "-"], 
+                                ["-", "-"], ["-", "-"], 
+
+                                ["b", "r"], ["-", "-"], // measure 13
+                                ["b", "l"], ["-", "-"], 
+                                ["b", "r"], ["-", "-"], 
+                                ["b", "l"], ["-", "-"], 
+
+                                ["b", "r"], ["-", "-"], // measure 14
+                                ["b", "l"], ["-", "-"], 
+                                ["b", "r"], ["-", "-"], 
+                                ["b", "l"], ["-", "-"], 
+
+                                ["b", "r"], ["-", "-"], // measure 15
+                                ["b", "l"], ["-", "-"], 
+                                ["b", "r"], ["-", "-"], 
+                                ["b", "l"], ["-", "-"],  
+                                
+                                ["h", "b"], ["-", "-"], // measure 16
+                                ["-", "-"], ["-", "-"], 
+                                ["-", "-"], ["-", "-"], 
+                                ["-", "-"], ["-", "-"], 
                              ];
 
         let obstacle_transform = Mat4.identity();
