@@ -141,7 +141,7 @@ export class GameScene extends Scene {
       
         this.track_length = 40;
         this.speed = 45;
-        this.spacing = (60 * speed) / (bpm * opb);
+        this.spacing = (60 * this.speed) / (bpm * opb);
         
       
         // for level restart
