@@ -55,17 +55,25 @@ export class GameScene extends Scene {
 
         // *** Materials
         this.materials = {
+            // TEST MATERIALS //
             test: new Material(new defs.Phong_Shader(),
                 {ambient: .4, diffusivity: .6, color: hex_color("#ffff00")}),
             red: new Material(new defs.Phong_Shader(),
                 {ambient: .4, diffusivity: .6, color: hex_color("#ff0000")}),
             blue: new Material(new defs.Phong_Shader(),
                 {ambient: .4, diffusivity: .6, color: hex_color("#0000ff")}),
+            // ONLINE TRON MATERIALS //
             tron_board: new Material(new Textured_Phong(), {
                 texture: new Texture("assets/tron_board.jpg"),
                 ambient: .4,
                 diffusivity: .6,
                 color: hex_color("#000000")}),
+            tron_hal: new Material(new Textured_Phong(), {
+                texture: new Texture("assets/tron_hal.jpg"),
+                ambient: .4,
+                diffusivity: .6,
+                color: hex_color("#000000")}),
+            // ANNA-CREATED MATERIALS //
             red_hurdle: new Material(new Textured_Phong(), {
                 texture: new Texture("assets/red_hurdle.png"),
                 ambient: .4,
@@ -100,11 +108,6 @@ export class GameScene extends Scene {
                 ambient: 1,
                 diffusivity: 1,
                 color: hex_color("#000000")}),
-            tron_hal: new Material(new Textured_Phong(), {
-                texture: new Texture("assets/tron_hal.jpg"),
-                ambient: .4,
-                diffusivity: .6,
-                color: hex_color("#000000")}),
             bg_texture: new Material(new Texture_Scroll_Y(), {
                 ambient: .5, diffusivity: 0.1, specularity: 0.1,
                 texture: new Texture("assets/tron.jpg"),
@@ -115,17 +118,20 @@ export class GameScene extends Scene {
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
 
-        //this.music = new Audio('assets/Often(1.25x).mp3');
+        this.music = new Audio('assets/ForceWait3Sec.mp4');
         //this.music.volume = 1;
         
         this.player = new Player();
 
         this.status = "waiting";
         this.start_time = 0;
+
+        // for level restart
+        this.restart = 0;
     }
   
     // takes array of type of obstacles, draws obstacles
-    draw_obstacles(array, obstacle_transform, context, program_state, t) {
+    draw_obstacles(array, obstacle_transform, context, program_state, t, light_array) {
         if (this.status == "waiting") {
             return;
         } else if (this.status == "init") {
@@ -151,19 +157,19 @@ export class GameScene extends Scene {
                  if (array[i][1] == "r") {
                      // right hurdle
                      obstacle_transform = obstacle_transform.times(Mat4.translation(2, 0, 0));
-                     this.shapes.hurdle.draw(context, program_state, obstacle_transform, this.materials.red);
+                     this.shapes.hurdle.draw(context, program_state, obstacle_transform, this.materials.blue_hurdle);
                      obstacle_transform = obstacle_transform.times(Mat4.translation(-2, 0, 0));
                  }
                  else if (array[i][1] == "l") {
                      // left hurdle
-                     this.shapes.hurdle.draw(context, program_state, obstacle_transform, this.materials.blue);
+                     this.shapes.hurdle.draw(context, program_state, obstacle_transform, this.materials.red_hurdle);
                  } else{
                      if (t < 5)
                         console.log("Row: " + i + " contains " +  array[i][0] + ", " + array[i][1]);
                      // hurdle accross both tracks
-                     this.shapes.hurdle.draw(context, program_state, obstacle_transform, this.materials.test);
+                     this.shapes.hurdle.draw(context, program_state, obstacle_transform, this.materials.blue_hurdle);
                      obstacle_transform = obstacle_transform.times(Mat4.translation(2, 0, 0));
-                     this.shapes.hurdle.draw(context, program_state, obstacle_transform, this.materials.test);
+                     this.shapes.hurdle.draw(context, program_state, obstacle_transform, this.materials.red_hurdle);
                      obstacle_transform = obstacle_transform.times(Mat4.translation(-2, 0, 0));
                  }
              }
@@ -172,7 +178,7 @@ export class GameScene extends Scene {
                     obstacle_transform = obstacle_transform.times(Mat4.translation(2, 0, 0));
                     obstacle_transform = obstacle_transform.times(Mat4.scale(1, 2, 1));
                     obstacle_transform = obstacle_transform.times(Mat4.translation(0, .5, 0));
-                    this.shapes.blockade.draw(context, program_state, obstacle_transform, this.materials.red);
+                    this.shapes.blockade.draw(context, program_state, obstacle_transform, this.materials.red_blockade);
                     obstacle_transform = obstacle_transform.times(Mat4.translation(0, -.5, 0));
                     obstacle_transform = obstacle_transform.times(Mat4.scale(1, 0.5, 1));
                     obstacle_transform = obstacle_transform.times(Mat4.translation(-2, 0, 0));
@@ -180,7 +186,7 @@ export class GameScene extends Scene {
                 if(array[i][1] == "l") {
                     obstacle_transform = obstacle_transform.times(Mat4.scale(1, 2, 1));
                     obstacle_transform = obstacle_transform.times(Mat4.translation(0, .5, 0));
-                    this.shapes.blockade.draw(context, program_state, obstacle_transform, this.materials.blue);
+                    this.shapes.blockade.draw(context, program_state, obstacle_transform, this.materials.blue_blockade);
                     obstacle_transform = obstacle_transform.times(Mat4.translation(0, -.5, 0));
                     obstacle_transform = obstacle_transform.times(Mat4.scale(1, 0.5, 1));
                 }
@@ -209,13 +215,19 @@ export class GameScene extends Scene {
         this.key_triggered_button("Jump", ["y"], function () {
             if (this.status == "waiting") {
                 this.status = "init";
+                this.music.load();
+                this.music.play();
             }
             this.player.jump();
-            //this.music.play();
         });
         this.new_line();
-        //this.key_triggered_button("Play/Pause Music", ["m"],
-        //    () => {if (this.music.paused) this.music.play(); else this.music.pause();});
+        this.key_triggered_button("Play/Pause Music", ["m"],
+            () => {if (this.music.paused) this.music.play(); else this.music.pause();});
+        this.key_triggered_button("Restart Music", ["n"],    
+            () => {this.music.load(); this.music.play()});
+        this.new_line();
+        this.key_triggered_button("Restart Level", ["b"],
+            () => {this.restart = 1; this.music.pause()});
     }
 
     display(context, program_state) {
@@ -230,10 +242,11 @@ export class GameScene extends Scene {
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, .1, 1000);
 
-        const light_position = vec4(0, 11, 20, 1);
-        const og_light = new Light(light_position, color(1, 1, 1, 1), 1000);
-        const light_position2 = vec4(0, 0, 0, 1);
+        const light_position = vec4(0, 2, 50, 1);
+        const og_light = new Light(light_position, color(1, 1, 1, 1), 5000);
+        const light_position2 = vec4(0, 20, -20, 1);
         const og2_light = new Light(light_position2, color(1, 1, 1, 1), 1000);
+
         program_state.lights = [og_light];
 
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
@@ -260,11 +273,26 @@ export class GameScene extends Scene {
         let track_two_transform = track_one_transform.times(Mat4.translation(2, 0, 0));
         this.shapes.track.draw(context, program_state, track_two_transform, this.materials.red_light_scroll);
 
-        let obstacle_array = [  ["-", "-"], ["-", "-"], ["-", "-"], ["h", "b"], ["b", "l"], ["h", "b"], ["b", "l"], ["h", "l"], 
-                                ["h", "r"], ["h", "r"], ["h", "r"], ["h", "r"], ["h", "r"], ["h", "r"], ["h", "r"], ["h", "r"], 
-                                ["b", "r"], ["h", "r"], ["b", "r"], ["h", "r"], ["h", "r"], ["h", "r"], ["h", "r"], ["h", "r"],
-                                ["h", "r"], ["h", "r"], ["h", "r"], ["h", "r"], ["b", "r"], ["h", "r"], ["b", "r"], ["h", "r"],
-                                ["h", "r"], ["h", "r"], ["h", "r"], ["h", "r"], ["h", "r"], ["h", "r"], ["h", "r"], ["h", "r"]  ];
+        if (this.restart) {
+            this.restart = 0;
+            this.status = "waiting";
+        }
+
+        let obstacle_array = [  ["-", "-"], ["-", "-"], ["b", "r"], 
+                                ["-", "-"], ["-", "-"], ["b", "l"], 
+                                ["-", "-"], ["-", "-"], ["h", "b"], 
+                                ["-", "-"], ["-", "-"], ["h", "b"], 
+                                ["-", "-"], ["-", "-"], ["b", "r"], 
+                                ["-", "-"], ["-", "-"], ["b", "l"],
+                                ["-", "-"], ["-", "-"], ["h", "b"], 
+                                ["-", "-"], ["-", "-"], ["h", "b"],
+                                ["-", "-"], ["-", "-"], ["h", "r"], 
+                                ["h", "r"], ["b", "r"], ["h", "r"], 
+                                ["b", "r"], ["h", "r"], ["h", "r"], 
+                                ["h", "r"], ["h", "r"], ["h", "r"], 
+                                ["h", "r"], ["h", "r"], ["h", "r"], 
+                                ["h", "r"]
+                             ];
 
         let obstacle_transform = Mat4.identity();
         obstacle_transform = obstacle_transform.times(Mat4.translation(-1.5, 1.5, -40));
