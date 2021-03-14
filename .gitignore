@@ -1,9 +1,6 @@
 *.gif
 *.ico
-*.png
-*.jpg
 *.obj
 *.bat
 *.command
 .DS_Store
-assets/
