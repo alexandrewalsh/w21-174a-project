@@ -6,3 +6,4 @@
 *.bat
 *.command
 .DS_Store
+assets/
