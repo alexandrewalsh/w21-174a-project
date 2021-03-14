@@ -7,12 +7,12 @@ const {
 
 const DEF_X = 1.7;
 const DEF_Y = 1.5;
-const DEF_Z = 3;
+const DEF_Z = 0;
 
 const JUMP_H = 5;
 
-const MOVE_T = 0.25;
-const JUMP_T = 0.5;
+const MOVE_T = 0.1;
+const JUMP_T = 0.3;
 
 export class Player {
     constructor() {
