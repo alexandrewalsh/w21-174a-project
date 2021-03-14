@@ -135,10 +135,14 @@ export class GameScene extends Scene {
                 traveling 240/105 units/beat time 
 
         */
+
+        let bpm = 60;
+        let opb = 2;   // Obstacles per beat, if 2 we are using 8th notes
       
         this.track_length = 40;
-        this.spacing = 30; //40
-        this.speed = 45; //80
+        this.speed = 45;
+        this.spacing = (60 * speed) / (bpm * opb);
+        
       
         // for level restart
         this.restart = 0;
