@@ -139,7 +139,7 @@ export class GameScene extends Scene {
         let bpm = 60;
         let opb = 2;   // Obstacles per beat, if 2 we are using 8th notes
       
-        this.track_length = 40;
+        this.track_length = 120;
         this.speed = 45;
         this.spacing = (60 * this.speed) / (bpm * opb);
         
@@ -230,7 +230,7 @@ export class GameScene extends Scene {
         let bg_transform = Mat4.identity()
                             .times(Mat4.translation(0,0,-20))
                             .times(Mat4.rotation(Math.PI,1,1,0))
-                            .times(Mat4.scale(20,20,50));
+                            .times(Mat4.scale(20, 20, this.track_length));
         this.shapes.bg_cone.draw(context, program_state, bg_transform, this.materials.bg_texture);
     }
 
@@ -385,7 +385,7 @@ export class GameScene extends Scene {
         let track_one_transform = Mat4.identity()
                                     .times(Mat4.translation(-1.5, 0, 0))
                                     .times(Mat4.translation(0, 0, -10))
-                                    .times(Mat4.scale(1.5, 0.5, 30));
+                                    .times(Mat4.scale(1.5, 0.5, this.track_length));
         
         this.shapes.track.draw(context, program_state, track_one_transform, this.materials.blue_light_scroll);
 

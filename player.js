@@ -5,7 +5,7 @@ const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene,
 } = tiny;
 
-const DEF_X = 1.7;
+const DEF_X = 1.5;
 const DEF_Y = 1.5;
 const DEF_Z = 0;
 
