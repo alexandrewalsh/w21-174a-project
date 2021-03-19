@@ -70,19 +70,19 @@ export class GameScene extends Scene {
                 color: hex_color("#000000")}),
             tron_hal: new Material(new Textured_Phong(), {
                 texture: new Texture("assets/tron_hal.jpg"),
-                ambient: .4,
+                ambient: 0.4,
                 diffusivity: .6,
                 color: hex_color("#000000")}),
             // ANNA-CREATED MATERIALS //
             red_hurdle: new Material(new Textured_Phong(), {
                 texture: new Texture("assets/red_hurdle.png"),
-                ambient: .4,
+                ambient: 1,
                 diffusivity: .6,
                 luminosity: 1,
                 color: hex_color("#000000")}),
             blue_hurdle: new Material(new Textured_Phong(), {
                 texture: new Texture("assets/blue_hurdle.png"),
-                ambient: .4,
+                ambient: 1,
                 diffusivity: .6,
                 luminosity: .5,
                 color: hex_color("#000000")}),
@@ -109,7 +109,7 @@ export class GameScene extends Scene {
                 diffusivity: 1,
                 color: hex_color("#000000")}),
             bg_texture: new Material(new Texture_Scroll_Y(), {
-                ambient: .5, diffusivity: 0.1, specularity: 0.1,
+                ambient: 1.0, diffusivity: 0.1, specularity: 0.1,
                 texture: new Texture("assets/tron.jpg"),
                 min_filter: "LINEAR_MINMAP_FILTERING",
                 color: hex_color("#000000")
@@ -363,7 +363,10 @@ export class GameScene extends Scene {
         const light_position2 = vec4(0, 20, -20, 1);
         const og2_light = new Light(light_position2, color(1, 1, 1, 1), 1000);
 
-        program_state.lights = [og_light];
+        const player_light_position = vec4(1.7, 1.5, 2, 1);
+        const player_light = new Light(player_light_position, color(0.5, 0.5, 1, 1), 10);
+
+        program_state.lights = [player_light];
 
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
         const blue = hex_color("#0000ff");
@@ -374,8 +377,8 @@ export class GameScene extends Scene {
 
         this.shapes.player.draw(context, program_state, player_transform, this.materials.tron_hal);
 
-        let player_light_position = player_transform.times(vec4(0, 0, 0, 1));
-        program_state.lights = [new Light(player_light_position, color(0.5, 0.5, 1, 1), 10**(1))];
+        //let player_light_position = player_transform.times(vec4(0, 0, 0, 1)).plus(vec4(0, 0, 3, 0));
+        //program_state.lights = [new Light(player_light_position, color(0.5, 0.5, 1, 1), 10**(3))];
 
         // background
         this.make_background(context, program_state);
