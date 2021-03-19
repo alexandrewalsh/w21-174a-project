@@ -374,6 +374,9 @@ export class GameScene extends Scene {
 
         this.shapes.player.draw(context, program_state, player_transform, this.materials.tron_hal);
 
+        let player_light_position = player_transform.times(vec4(0, 0, 0, 1));
+        program_state.lights = [new Light(player_light_position, color(0.5, 0.5, 1, 1), 10**(1))];
+
         // background
         this.make_background(context, program_state);
 
