@@ -5,14 +5,14 @@ const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene,
 } = tiny;
 
-const DEF_X = 1.7;
+const DEF_X = 1.5;
 const DEF_Y = 1.5;
 const DEF_Z = 0;
 
 const JUMP_H = 5;
 
-const MOVE_T = 0.1;
-const JUMP_T = 0.3;
+const MOVE_T = 0.08;
+const JUMP_T = 0.28;
 
 export class Player {
     constructor() {
