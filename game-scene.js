@@ -131,6 +131,9 @@ export class GameScene extends Scene {
       
         // for level restart
         this.restart = 0;
+
+        //score
+        this.score = 0;
     }
 
     // Min index is the earliest object still in front of the camera
@@ -333,6 +336,8 @@ export class GameScene extends Scene {
         this.new_line();
         this.key_triggered_button("Restart Level", ["b"],
             () => {this.restart = 1; this.music.pause()});
+        this.new_line();
+        this.live_string(box => box.textContent = "- Score: " + this.score);
     }
 
     display(context, program_state) {
@@ -534,6 +539,7 @@ export class GameScene extends Scene {
 
         if (this.detect_collision(t, obstacle_array, player_transform)) {
             this.shapes.torus.draw(context, program_state, Mat4.identity().times(Mat4.translation(6, 2.5, 5)), this.materials.blue);
+            this.score = this.score + 1;
         }
     }
 }
