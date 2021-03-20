@@ -24,6 +24,7 @@ export class GameScene extends Scene {
             cylinder: new defs.Capped_Cylinder(20,20),
             bg_cone: new defs.Closed_Cone(50,50),
             player: new defs.Cube(),
+            box: new Cube(),
         };
 
         this.shapes.track.arrays.texture_coord = [
@@ -83,12 +84,12 @@ export class GameScene extends Scene {
                 color: hex_color("#000000")}),
             red_blockade: new Material(new Textured_Phong(), {
                 texture: new Texture("assets/red_noblur.png"),
-                ambient: .4,
+                ambient: 1.0,
                 diffusivity: .6,
                 color: hex_color("#000000")}),
             blue_blockade: new Material(new Textured_Phong(), {
                 texture: new Texture("assets/blue_noblur.png"),
-                ambient: .4,
+                ambient: 1.0,
                 diffusivity: .6,
                 color: hex_color("#000000")}),
             blue_light_scroll: new Material(new Texture_Scroll_Y(), {
@@ -108,6 +109,11 @@ export class GameScene extends Scene {
                 texture: new Texture("assets/tron.jpg"),
                 min_filter: "LINEAR_MINMAP_FILTERING",
                 color: hex_color("#000000")
+            }),
+            // BRADDLESNAKE MATS
+            brick: new Material( new defs.Phong_Shader(), { 
+                color: color( 1,1,1,1 ),
+                ambient: .05, diffusivity: .5, specularity: .5, smoothness: 10
             }),
         }
 
@@ -131,16 +137,42 @@ export class GameScene extends Scene {
       
         // for level restart
         this.restart = 0;
+
+        // Create arrays for background boxes
+        this.bg_r_boxes = [];
+        this.bg_l_boxes = [];
+        this.bg_wrap = 0;
+        for (let i = 0; i < 2; i++) {
+            for (let j = 0; j < this.track_length / 4; j++) {
+                const box1_height = 1.0 + 3.0 * Math.random();
+                const box2_height = 1.0 + 3.0 * Math.random();
+
+                const box1_x_offset = (-1.0)**(i) * (8.0 + Math.random());
+                const box2_x_offset = (-1.0)**(i) * (10.0 + Math.random());
+
+                const box1_y_offset = 3.0 * (Math.random() - 0.5);
+                const box2_y_offset = 3.0 * (Math.random() - 0.5);
+
+                const row = {'box1': {'height': box1_height, 'x_offset': box1_x_offset, 'y_offset': box1_y_offset},
+                             'box2': {'height': box2_height, 'x_offset': box2_x_offset, 'y_offset': box2_y_offset} }
+
+                if (i == 0) {
+                    this.bg_r_boxes.push(row);
+                } else {
+                    this.bg_l_boxes.push(row);   
+                }
+            } 
+        }
     }
 
-    // Min index is the earliest object still in front of the camera
+    // Min index is the earliest obstacle still in front of the camera
         //  Objects begin at: track_length + ~30 + spacing * index in front of camera, thus it
         //  takes (track_length + 10 + spacing*index) / speed seconds to pass camera. If t > this value, don't draw
     getMinIndex(t) {
         return Math.max(0,  Math.round((t*this.speed - this.track_length - 30)/this.spacing)  );
     }
 
-    // Max index is the latest object within a reasonable distance to the camera
+    // Max index is the latest obstacle within a reasonable distance to the camera
         // Objects shouldn't be drawn until they are at position track_length
         // Objects start at position track_length + spacing * index, and need to reach position track_length
         // This traversal takes time t = spacing * index / speed. If t < this value, don't draw this object
@@ -175,12 +207,12 @@ export class GameScene extends Scene {
                  if (array[i][1] == "r") {
                      // right hurdle
                      obstacle_transform = obstacle_transform.times(Mat4.translation(2, 0, 0));
-                     this.shapes.hurdle.draw(context, program_state, obstacle_transform, this.materials.blue_hurdle);
+                     this.shapes.hurdle.draw(context, program_state, obstacle_transform, this.materials.red_hurdle);
                      obstacle_transform = obstacle_transform.times(Mat4.translation(-2, 0, 0));
                  }
                  else if (array[i][1] == "l") {
                      // left hurdle
-                     this.shapes.hurdle.draw(context, program_state, obstacle_transform, this.materials.red_hurdle);
+                     this.shapes.hurdle.draw(context, program_state, obstacle_transform, this.materials.blue_hurdle);
                  } else{
                      // hurdle accross both tracks
                      this.shapes.hurdle.draw(context, program_state, obstacle_transform, this.materials.blue_hurdle);
@@ -192,31 +224,62 @@ export class GameScene extends Scene {
             if(array[i][0] == "b") {
                 if(array[i][1] == "r") {
                     obstacle_transform = obstacle_transform.times(Mat4.translation(2, 0, 0));
-                    obstacle_transform = obstacle_transform.times(Mat4.scale(1, 2, 1));
+                    obstacle_transform = obstacle_transform.times(Mat4.scale(1, 4, 1));
                     obstacle_transform = obstacle_transform.times(Mat4.translation(0, .5, 0));
                     this.shapes.blockade.draw(context, program_state, obstacle_transform, this.materials.red_blockade);
                     obstacle_transform = obstacle_transform.times(Mat4.translation(0, -.5, 0));
-                    obstacle_transform = obstacle_transform.times(Mat4.scale(1, 0.5, 1));
+                    obstacle_transform = obstacle_transform.times(Mat4.scale(1, 0.25, 1));
                     obstacle_transform = obstacle_transform.times(Mat4.translation(-2, 0, 0));
                 }
                 if(array[i][1] == "l") {
-                    obstacle_transform = obstacle_transform.times(Mat4.scale(1, 2, 1));
+                    obstacle_transform = obstacle_transform.times(Mat4.scale(1, 4, 1));
                     obstacle_transform = obstacle_transform.times(Mat4.translation(0, .5, 0));
                     this.shapes.blockade.draw(context, program_state, obstacle_transform, this.materials.blue_blockade);
                     obstacle_transform = obstacle_transform.times(Mat4.translation(0, -.5, 0));
-                    obstacle_transform = obstacle_transform.times(Mat4.scale(1, 0.5, 1));
+                    obstacle_transform = obstacle_transform.times(Mat4.scale(1, 0.25, 1));
                 }
             }
             obstacle_transform = obstacle_transform.times(Mat4.translation(0, 0, i * spacing));
         }
     }
 
-    make_background(context, program_state) {
+    draw_box_row(context, program_state, row, transform, z) {
+        // Compute box transforms
+        let box1_transform = transform.times(Mat4.translation(row.box1.x_offset, row.box1.y_offset, z)).times(Mat4.scale(1, row.box1.height, 1));
+        let box2_transform = transform.times(Mat4.translation(row.box2.x_offset, row.box2.y_offset, z)).times(Mat4.scale(1, row.box2.height, 1));
+        
+        // Set lighting for row
+        
+        
+        // Draw
+        this.shapes.box.draw(context, program_state, box1_transform, this.materials.brick);
+        this.shapes.box.draw(context, program_state, box2_transform, this.materials.brick);
+    }
+
+    make_background(context, program_state, t) {
         let bg_transform = Mat4.identity()
                             .times(Mat4.translation(0,0,-20))
                             .times(Mat4.rotation(Math.PI,1,1,0))
                             .times(Mat4.scale(20, 20, this.track_length));
-        this.shapes.bg_cone.draw(context, program_state, bg_transform, this.materials.bg_texture);
+        //this.shapes.bg_cone.draw(context, program_state, bg_transform, this.materials.bg_texture);
+
+        // As background boxes move, we wrap them from front to back of array
+        let t_since_wrap = t - this.bg_wrap;
+        if (t_since_wrap > 6 / (this.speed / 2)) {
+            this.bg_r_boxes.push(this.bg_r_boxes.shift());
+            this.bg_l_boxes.push(this.bg_l_boxes.shift());
+            this.bg_wrap = t;
+            t_since_wrap = 0;
+        }
+
+        // Draw all the boxes
+        let bg_box_transform = Mat4.identity().times(Mat4.translation(0, 1.5, 30));
+        for (let i = 0; i < this.bg_r_boxes.length; i++) {
+            this.draw_box_row(context, program_state, this.bg_r_boxes[i], bg_box_transform, t_since_wrap * this.speed / 2);
+            this.draw_box_row(context, program_state, this.bg_l_boxes[i], bg_box_transform, t_since_wrap * this.speed / 2);
+
+            bg_box_transform = bg_box_transform.times(Mat4.translation(0, 0, -6));
+        }
     }
 
     detect_collision(t, array, player_transform) {
@@ -253,7 +316,7 @@ export class GameScene extends Scene {
             if (type == "h") {
                 height = 2;
             } else if (type == "b") {
-                height = 4;
+                height = 8;
                 obstacle_transform = obstacle_transform.times(Mat4.translation(0, 0.5, 0));
             } else { // Dummy obstacle
                 continue;
@@ -370,7 +433,7 @@ export class GameScene extends Scene {
         //program_state.lights = [new Light(player_light_position, color(0.5, 0.5, 1, 1), 10**(3))];
 
         // background
-        this.make_background(context, program_state);
+        this.make_background(context, program_state, t);
 
         // draw left track
         let track_one_transform = Mat4.identity()
