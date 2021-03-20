@@ -83,7 +83,9 @@ export class Player {
             // Player jumps in parabolic motion
             //let y_pos = -Math.pow(8*time - 2, 2) + 4;
             let y_pos = - (JUMP_H / 4) * Math.pow((4 / JUMP_T) * time - 2, 2) + JUMP_H;
-            return Mat4.identity().times(Mat4.translation(0, DEF_Y + y_pos, 0));
+            let theta = Math.PI / 2 * time / JUMP_T;
+            return Mat4.identity().times(Mat4.translation(0, DEF_Y + y_pos, 0))
+                                  .times(Mat4.rotation(-theta, 1, 0, 0));
         }
         else {
             this.player_jumping = false;

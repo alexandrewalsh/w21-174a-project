@@ -24,6 +24,7 @@ export class GameScene extends Scene {
             cylinder: new defs.Capped_Cylinder(20,20),
             bg_cone: new defs.Closed_Cone(50,50),
             player: new defs.Cube(),
+            box: new Cube(),
             text: new defs.Square()
         };
 
@@ -54,6 +55,15 @@ export class GameScene extends Scene {
             new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), //back
         ];
 
+        this.shapes.player.arrays.texture_coord = [
+            new Vector([0,0]), new Vector([1,0]), new Vector([0,1]), new Vector([1,1]), //bottom
+            new Vector([0,0]), new Vector([1,0]), new Vector([0,1]), new Vector([1,1]), //top
+            new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), //left
+            new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), //right
+            new Vector([0,0]), new Vector([1,0]), new Vector([0,1]), new Vector([1,1]), //front
+            new Vector([0,0]), new Vector([1,0]), new Vector([0,1]), new Vector([1,1]), //back
+        ];
+
         // *** Materials
         this.materials = {
             // TEST MATERIALS //
@@ -66,7 +76,7 @@ export class GameScene extends Scene {
             // ONLINE TRON MATERIALS //
             tron_hal: new Material(new Textured_Phong(), {
                 texture: new Texture("assets/tron_hal.jpg"),
-                ambient: .4,
+                ambient: 0.4,
                 diffusivity: .6,
                 color: hex_color("#000000")}),
             // TEXT MATERIALS //
@@ -76,24 +86,24 @@ export class GameScene extends Scene {
             // ANNA-CREATED MATERIALS //
             red_hurdle: new Material(new Textured_Phong(), {
                 texture: new Texture("assets/red_hurdle.png"),
-                ambient: .4,
+                ambient: 1,
                 diffusivity: .6,
                 luminosity: 1,
                 color: hex_color("#000000")}),
             blue_hurdle: new Material(new Textured_Phong(), {
                 texture: new Texture("assets/blue_hurdle.png"),
-                ambient: .4,
+                ambient: 1,
                 diffusivity: .6,
                 luminosity: .5,
                 color: hex_color("#000000")}),
             red_blockade: new Material(new Textured_Phong(), {
                 texture: new Texture("assets/red_noblur.png"),
-                ambient: .4,
+                ambient: 1.0,
                 diffusivity: .6,
                 color: hex_color("#000000")}),
             blue_blockade: new Material(new Textured_Phong(), {
                 texture: new Texture("assets/blue_noblur.png"),
-                ambient: .4,
+                ambient: 1.0,
                 diffusivity: .6,
                 color: hex_color("#000000")}),
             blue_light_scroll: new Material(new Texture_Scroll_Y(), {
@@ -109,9 +119,20 @@ export class GameScene extends Scene {
                 diffusivity: 1,
                 color: hex_color("#000000")}),
             bg_texture: new Material(new Texture_Scroll_Y(), {
-                ambient: .5, diffusivity: 0.1, specularity: 0.1,
+                ambient: 1.0, diffusivity: 0.1, specularity: 0.1,
                 texture: new Texture("assets/tron.jpg"),
                 min_filter: "LINEAR_MINMAP_FILTERING",
+                color: hex_color("#000000")
+            }),
+            // BRADDLESNAKE MATS
+            brick: new Material( new defs.Phong_Shader(), { 
+                color: color( 1,1,1,1 ),
+                ambient: .05, diffusivity: .5, specularity: .5, smoothness: 10
+            }),
+            player_circle: new Material(new Textured_Phong(), {
+                texture: new Texture("assets/player_circle.PNG"),
+                ambient: 1,
+                diffusivity: 0,
                 color: hex_color("#000000")
             }),
         }
@@ -126,13 +147,12 @@ export class GameScene extends Scene {
         this.status = "waiting";
         this.start_time = 0;
 
-        let bpm = 105;
+        this.bpm = 105;
         let opb = 2;   // Obstacles per beat, if 2 we are using 8th notes
       
         this.track_length = 120;
         this.speed = 45;
-        this.spacing = (60 * this.speed) / (bpm * opb);
-
+        this.spacing = (60 * this.speed) / (this.bpm * opb);
         this.text_transform = Mat4.identity()
                                 .times(Mat4.translation(0,3,5))
                                 .times(Mat4.scale(9,9,9));
@@ -140,20 +160,67 @@ export class GameScene extends Scene {
       
         // for level restart
         this.restart = 0;
-
-        //score
+      
+        // score
         this.score = 0;
         this.timer = 0;
+
+        // Create arrays for background boxes
+        this.bg_r_boxes = [];
+        this.bg_l_boxes = [];
+        this.bg_b_boxes = [];
+        this.bg_wrap = 0;
+
+        // Do left and right background boxes
+        for (let i = 0; i < 2; i++) {
+            for (let j = 0; j < this.track_length / 4; j++) {
+                const box1_height = 1.0 + 3.0 * Math.random();
+                const box2_height = 1.0 + 3.0 * Math.random();
+
+                const box1_x_offset = (-1.0)**(i) * (7.0 + 5.0 * Math.random());
+                const box2_x_offset = (-1.0)**(i) * (10.0 + 5.0 * Math.random());
+
+                const box1_y_offset = 10.0 * (Math.random() - 0.5) - 1.0;
+                const box2_y_offset = 10.0 * (Math.random() - 0.5) - 1.0;
+
+                const row = {'box1': {'height': box1_height, 'x_offset': box1_x_offset, 'y_offset': box1_y_offset},
+                             'box2': {'height': box2_height, 'x_offset': box2_x_offset, 'y_offset': box2_y_offset} };
+
+                if (i == 0) {
+                    this.bg_r_boxes.push(row);
+                } else {
+                    this.bg_l_boxes.push(row);   
+                }
+            } 
+        }
+        // Do bottom background boxes
+        for (let j = 0; j < this.track_length / 4; j++) {
+            const box1_height = 1.0 + 3.0 * Math.random();
+            const box2_height = 1.0 + 3.0 * Math.random();
+
+            const box1_x_offset = -3.0 + 4.0 * (Math.random() - 0.5);
+            const box2_x_offset = 3.0 + 4.0 * (Math.random() - 0.5);
+
+            const box1_y_offset = 5.0 * (Math.random() - 0.5) - 8.0;
+            const box2_y_offset = 5.0 * (Math.random() - 0.5) - 8.0;
+
+            const row = {'box1': {'height': box1_height, 'x_offset': box1_x_offset, 'y_offset': box1_y_offset},
+                         'box2': {'height': box2_height, 'x_offset': box2_x_offset, 'y_offset': box2_y_offset} };
+
+            this.bg_b_boxes.push(row);
+        } 
+        console.log("r len: " + this.bg_r_boxes.length);
+        console.log("b len: " + this.bg_b_boxes.length);
     }
 
-    // Min index is the earliest object still in front of the camera
+    // Min index is the earliest obstacle still in front of the camera
         //  Objects begin at: track_length + ~30 + spacing * index in front of camera, thus it
         //  takes (track_length + 10 + spacing*index) / speed seconds to pass camera. If t > this value, don't draw
     getMinIndex(t) {
         return Math.max(0,  Math.round((t*this.speed - this.track_length - 30)/this.spacing)  );
     }
 
-    // Max index is the latest object within a reasonable distance to the camera
+    // Max index is the latest obstacle within a reasonable distance to the camera
         // Objects shouldn't be drawn until they are at position track_length
         // Objects start at position track_length + spacing * index, and need to reach position track_length
         // This traversal takes time t = spacing * index / speed. If t < this value, don't draw this object
@@ -190,12 +257,12 @@ export class GameScene extends Scene {
                  if (array[i][1] == "r") {
                      // right hurdle
                      obstacle_transform = obstacle_transform.times(Mat4.translation(2, 0, 0));
-                     this.shapes.hurdle.draw(context, program_state, obstacle_transform, this.materials.blue_hurdle);
+                     this.shapes.hurdle.draw(context, program_state, obstacle_transform, this.materials.red_hurdle);
                      obstacle_transform = obstacle_transform.times(Mat4.translation(-2, 0, 0));
                  }
                  else if (array[i][1] == "l") {
                      // left hurdle
-                     this.shapes.hurdle.draw(context, program_state, obstacle_transform, this.materials.red_hurdle);
+                     this.shapes.hurdle.draw(context, program_state, obstacle_transform, this.materials.blue_hurdle);
                  } else{
                      // hurdle accross both tracks
                      this.shapes.hurdle.draw(context, program_state, obstacle_transform, this.materials.blue_hurdle);
@@ -207,19 +274,19 @@ export class GameScene extends Scene {
             if(array[i][0] == "b") {
                 if(array[i][1] == "r") {
                     obstacle_transform = obstacle_transform.times(Mat4.translation(2, 0, 0));
-                    obstacle_transform = obstacle_transform.times(Mat4.scale(1, 2, 1));
+                    obstacle_transform = obstacle_transform.times(Mat4.scale(1, 4, 1));
                     obstacle_transform = obstacle_transform.times(Mat4.translation(0, .5, 0));
                     this.shapes.blockade.draw(context, program_state, obstacle_transform, this.materials.red_blockade);
                     obstacle_transform = obstacle_transform.times(Mat4.translation(0, -.5, 0));
-                    obstacle_transform = obstacle_transform.times(Mat4.scale(1, 0.5, 1));
+                    obstacle_transform = obstacle_transform.times(Mat4.scale(1, 0.25, 1));
                     obstacle_transform = obstacle_transform.times(Mat4.translation(-2, 0, 0));
                 }
                 if(array[i][1] == "l") {
-                    obstacle_transform = obstacle_transform.times(Mat4.scale(1, 2, 1));
+                    obstacle_transform = obstacle_transform.times(Mat4.scale(1, 4, 1));
                     obstacle_transform = obstacle_transform.times(Mat4.translation(0, .5, 0));
                     this.shapes.blockade.draw(context, program_state, obstacle_transform, this.materials.blue_blockade);
                     obstacle_transform = obstacle_transform.times(Mat4.translation(0, -.5, 0));
-                    obstacle_transform = obstacle_transform.times(Mat4.scale(1, 0.5, 1));
+                    obstacle_transform = obstacle_transform.times(Mat4.scale(1, 0.25, 1));
                 }
             }
             obstacle_transform = obstacle_transform.times(Mat4.translation(0, 0, i * spacing));
@@ -230,12 +297,71 @@ export class GameScene extends Scene {
         }
     }
 
-    make_background(context, program_state) {
+    draw_box_row(context, program_state, t, i, transform, z, side) {
+        let row = this.bg_r_boxes[i];
+        if (side == "l") {
+            row = this.bg_l_boxes[i];
+        } else if (side == "b") {
+            row = this.bg_b_boxes[i];
+        }
+
+        // Compute box transforms
+        let box1_transform = transform.times(Mat4.translation(row.box1.x_offset, row.box1.y_offset, z)).times(Mat4.scale(1, row.box1.height, 1));
+        let box2_transform = transform.times(Mat4.translation(row.box2.x_offset, row.box2.y_offset, z)).times(Mat4.scale(1, row.box2.height, 1));
+        
+        // Set lighting for row
+        let light_pos = box1_transform.times(vec4(0, 0, 0, 1)).plus(vec4(0, 5, 3, 0));
+        let light_color = color(1, 0.1, 0, 1);
+        if (side == "l") {
+            light_color = color(0, 0.3, 1, 1);
+        } else if (side == "b") {
+            light_color = color(0.7, 0.1, 0.7, 1);
+        }
+        
+        let pulse_time = 1 / 60 / (1 / this.bpm);
+        program_state.lights = [ new Light( light_pos, light_color, 30 * Math.sin(Math.PI*pulse_time*(t - this.start_time)) + 32 ) ]; 
+
+        let lit_range = 2 * this.bg_r_boxes.length / 3;
+        let curr_lit = [    Math.floor(Math.random() * lit_range),
+                            /*Math.floor(lit_range - (11 * t) % lit_range)*/  ];
+        
+        if (curr_lit.includes(i)) {
+            program_state.lights.push( new Light( light_pos, color(1, 0.2, 1, 1), 10 ) );
+        }
+
+        // Draw
+        this.shapes.box.draw(context, program_state, box1_transform, this.materials.brick);
+        this.shapes.box.draw(context, program_state, box2_transform, this.materials.brick);
+
+        program_state.lights = [];
+    }
+
+    make_background(context, program_state, t) {
         let bg_transform = Mat4.identity()
                             .times(Mat4.translation(0,0,-20))
                             .times(Mat4.rotation(Math.PI,1,1,0))
                             .times(Mat4.scale(20, 20, this.track_length));
-        this.shapes.bg_cone.draw(context, program_state, bg_transform, this.materials.bg_texture);
+        //this.shapes.bg_cone.draw(context, program_state, bg_transform, this.materials.bg_texture);
+
+        // As background boxes move, we wrap them from front to back of array
+        let t_since_wrap = t - this.bg_wrap;
+        if (t_since_wrap > 6 / (this.speed / 2)) {
+            this.bg_r_boxes.push(this.bg_r_boxes.shift());
+            this.bg_l_boxes.push(this.bg_l_boxes.shift());
+            this.bg_b_boxes.push(this.bg_b_boxes.shift());
+            this.bg_wrap = t;
+            t_since_wrap = 0;
+        }
+
+        // Draw all the boxes
+        let bg_box_transform = Mat4.identity().times(Mat4.translation(0, 1.5, 30));
+        for (let i = 0; i < this.bg_r_boxes.length; i++) {
+            this.draw_box_row(context, program_state, t, i, bg_box_transform, t_since_wrap * this.speed / 2, "r");
+            this.draw_box_row(context, program_state, t, i, bg_box_transform, t_since_wrap * this.speed / 2, "l");
+            this.draw_box_row(context, program_state, t, i, bg_box_transform, t_since_wrap * this.speed / 2, "b");
+
+            bg_box_transform = bg_box_transform.times(Mat4.translation(0, 0, -6));
+        }
     }
 
     detect_collision(t, array, player_transform) {
@@ -272,7 +398,7 @@ export class GameScene extends Scene {
             if (type == "h") {
                 height = 2;
             } else if (type == "b") {
-                height = 4;
+                height = 8;
                 obstacle_transform = obstacle_transform.times(Mat4.translation(0, 0.5, 0));
             } else { // Dummy obstacle
                 continue;
@@ -373,19 +499,36 @@ export class GameScene extends Scene {
         const light_position2 = vec4(0, 20, -20, 1);
         const og2_light = new Light(light_position2, color(1, 1, 1, 1), 1000);
 
-        program_state.lights = [og_light];
+        const player_light_position = vec4(1.7, 1.5, 20, 1);
+        const player_light = new Light(player_light_position, color(0.5, 0.5, 1, 1), 1);
+
+        program_state.lights = [player_light];
 
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
         const blue = hex_color("#0000ff");
         const red = hex_color("#ff0000");
         let model_transform = Mat4.identity();
       
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // Draw Player
         let player_transform = this.player.getPosition(t);
+        let player_inner_transform = player_transform.times(Mat4.scale(0.99, 0.99, 0.99));
+        this.shapes.player.draw(context, program_state, player_inner_transform, this.materials.brick);
+        let lane = this.player.getLane();
 
-        this.shapes.player.draw(context, program_state, player_transform, this.materials.tron_hal);
+        let pulse_time = 1 / 60 / (1 / this.bpm);
+        let pulse_color = 0.3 * Math.sin(Math.PI*pulse_time*(t - this.start_time)) + 0.7;
+
+        if (lane == "r") {
+            this.shapes.player.draw(context, program_state, player_transform, this.materials.player_circle.override({color: color(pulse_color, 0.1, 0.1, 1)}));
+        } else {
+            this.shapes.player.draw(context, program_state, player_transform, this.materials.player_circle.override({color: color(0.1, 0.1, pulse_color, 1)}));
+        }
+
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         // background
-        this.make_background(context, program_state);
+        this.make_background(context, program_state, t);
 
         // draw left track
         let track_one_transform = Mat4.identity()
@@ -555,7 +698,6 @@ export class GameScene extends Scene {
         this.draw_obstacles(obstacle_array, obstacle_transform, context, program_state, t);
 
         if (this.detect_collision(t, obstacle_array, player_transform)) {
-            this.shapes.torus.draw(context, program_state, Mat4.identity().times(Mat4.translation(6, 2.5, 5)), this.materials.blue);
             this.timer = 3;
         }
         if(this.timer > 0){
