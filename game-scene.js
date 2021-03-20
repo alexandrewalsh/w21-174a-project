@@ -25,6 +25,7 @@ export class GameScene extends Scene {
             bg_cone: new defs.Closed_Cone(50,50),
             player: new defs.Cube(),
             box: new Cube(),
+            text: new defs.Square()
         };
 
         this.shapes.track.arrays.texture_coord = [
@@ -78,6 +79,10 @@ export class GameScene extends Scene {
                 ambient: 0.4,
                 diffusivity: .6,
                 color: hex_color("#000000")}),
+            // TEXT MATERIALS //
+            start_text: new Material(new Textured_Phong, {
+                texture: new Texture("assets/PressYtoDance.png"),
+                color: hex_color("#9400d3")}),
             // ANNA-CREATED MATERIALS //
             red_hurdle: new Material(new Textured_Phong(), {
                 texture: new Texture("assets/red_hurdle.png"),
@@ -148,10 +153,17 @@ export class GameScene extends Scene {
         this.track_length = 120;
         this.speed = 45;
         this.spacing = (60 * this.speed) / (this.bpm * opb);
+        this.text_transform = Mat4.identity()
+                                .times(Mat4.translation(0,3,5))
+                                .times(Mat4.scale(9,9,9));
         
       
         // for level restart
         this.restart = 0;
+      
+        // score
+        this.score = 0;
+        this.timer = 0;
 
         // Create arrays for background boxes
         this.bg_r_boxes = [];
@@ -219,7 +231,8 @@ export class GameScene extends Scene {
     // takes array of type of obstacles, draws obstacles
     draw_obstacles(array, obstacle_transform, context, program_state, t, light_array) {
         if (this.status == "waiting") {
-            return;
+             this.shapes.text.draw(context, program_state, this.text_transform, this.materials.start_text);
+             return;
         } else if (this.status == "init") {
             this.start_time = t;
             this.status = "playing";
@@ -233,6 +246,7 @@ export class GameScene extends Scene {
         let min_index = this.getMinIndex(t);
         let max_index = this.getMaxIndex(t, array);
 
+        this.shapes.text.draw(context, program_state, this.text_transform.times(Mat4.translation(0,0,(speed/20) * t)), this.materials.start_text);
         obstacle_transform = obstacle_transform.times(Mat4.translation(0, 0, speed * t));
         //this.shapes.hurdle.draw(context, program_state, obstacle_transform, this.materials.blue);
 
@@ -276,6 +290,10 @@ export class GameScene extends Scene {
                 }
             }
             obstacle_transform = obstacle_transform.times(Mat4.translation(0, 0, i * spacing));
+        }
+
+        if (min_index >= array.length) {
+            this.status = "waiting"
         }
     }
 
@@ -460,6 +478,8 @@ export class GameScene extends Scene {
         this.new_line();
         this.key_triggered_button("Restart Level", ["b"],
             () => {this.restart = 1; this.music.pause()});
+        this.new_line();
+        this.live_string(box => box.textContent = "- Score: " + this.score);
     }
 
     display(context, program_state) {
@@ -525,6 +545,7 @@ export class GameScene extends Scene {
         if (this.restart) {
             this.restart = 0;
             this.status = "waiting";
+            this.score = 0;
         }
 
         /* Obstacle Types:
@@ -675,6 +696,17 @@ export class GameScene extends Scene {
         obstacle_transform = obstacle_transform.times(Mat4.translation(-1.5, 1.5, -this.track_length));
         obstacle_transform = obstacle_transform.times(Mat4.scale(1.5, 1, 1));
         this.draw_obstacles(obstacle_array, obstacle_transform, context, program_state, t);
+
+        if (this.detect_collision(t, obstacle_array, player_transform)) {
+            this.timer = 3;
+        }
+        if(this.timer > 0){
+            this.timer = this.timer - 1;
+        }
+        if(this.timer == 1){
+            this.score = this.score + 1;
+            this.timer = 0;
+        }
     }
 }
 
