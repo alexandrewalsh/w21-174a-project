@@ -134,6 +134,7 @@ export class GameScene extends Scene {
 
         //score
         this.score = 0;
+        this.timer = 0;
     }
 
     // Min index is the earliest object still in front of the camera
@@ -386,6 +387,7 @@ export class GameScene extends Scene {
         if (this.restart) {
             this.restart = 0;
             this.status = "waiting";
+            this.score = 0;
         }
 
         /* Obstacle Types:
@@ -539,7 +541,14 @@ export class GameScene extends Scene {
 
         if (this.detect_collision(t, obstacle_array, player_transform)) {
             this.shapes.torus.draw(context, program_state, Mat4.identity().times(Mat4.translation(6, 2.5, 5)), this.materials.blue);
+            this.timer = 3;
+        }
+        if(this.timer > 0){
+            this.timer = this.timer - 1;
+        }
+        if(this.timer == 1){
             this.score = this.score + 1;
+            this.timer = 0;
         }
     }
 }
