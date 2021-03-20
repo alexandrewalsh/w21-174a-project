@@ -243,17 +243,38 @@ export class GameScene extends Scene {
         }
     }
 
-    draw_box_row(context, program_state, row, transform, z) {
+    draw_box_row(context, program_state, t, i, transform, z, side) {
+        let row = this.bg_r_boxes[i];
+        if (side == "l") {
+            row = this.bg_l_boxes[i];
+        }
+
         // Compute box transforms
         let box1_transform = transform.times(Mat4.translation(row.box1.x_offset, row.box1.y_offset, z)).times(Mat4.scale(1, row.box1.height, 1));
         let box2_transform = transform.times(Mat4.translation(row.box2.x_offset, row.box2.y_offset, z)).times(Mat4.scale(1, row.box2.height, 1));
         
         // Set lighting for row
+        let light_pos = box1_transform.times(vec4(0, 0, 0, 1)).plus(vec4(0, 5, 3, 0));
+        let light_color = color(1, 0.2, 0.2, 1);
+        if (side == "l") {
+            light_color = color(0.2, 0.2, 1, 1);
+        }
+
+        program_state.lights = [ new Light( light_pos, light_color, 30 * Math.sin(8*t) + 32 ) ]; 
+
+        let lit_range = 2 * this.bg_r_boxes.length / 3;
+        let curr_lit = [    Math.floor(Math.random() * lit_range),
+                            /*Math.floor(lit_range - (11 * t) % lit_range)*/  ];
         
-        
+        if (curr_lit.includes(i)) {
+            program_state.lights.push( new Light( light_pos, color(1, 0.2, 1, 1), 10 ) );
+        }
+
         // Draw
         this.shapes.box.draw(context, program_state, box1_transform, this.materials.brick);
         this.shapes.box.draw(context, program_state, box2_transform, this.materials.brick);
+
+        program_state.lights = [];
     }
 
     make_background(context, program_state, t) {
@@ -275,8 +296,8 @@ export class GameScene extends Scene {
         // Draw all the boxes
         let bg_box_transform = Mat4.identity().times(Mat4.translation(0, 1.5, 30));
         for (let i = 0; i < this.bg_r_boxes.length; i++) {
-            this.draw_box_row(context, program_state, this.bg_r_boxes[i], bg_box_transform, t_since_wrap * this.speed / 2);
-            this.draw_box_row(context, program_state, this.bg_l_boxes[i], bg_box_transform, t_since_wrap * this.speed / 2);
+            this.draw_box_row(context, program_state, t, i, bg_box_transform, t_since_wrap * this.speed / 2, "r");
+            this.draw_box_row(context, program_state, t, i, bg_box_transform, t_since_wrap * this.speed / 2, "l");
 
             bg_box_transform = bg_box_transform.times(Mat4.translation(0, 0, -6));
         }
