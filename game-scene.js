@@ -127,12 +127,12 @@ export class GameScene extends Scene {
         this.status = "waiting";
         this.start_time = 0;
 
-        let bpm = 105;
+        this.bpm = 105;
         let opb = 2;   // Obstacles per beat, if 2 we are using 8th notes
       
         this.track_length = 120;
         this.speed = 45;
-        this.spacing = (60 * this.speed) / (bpm * opb);
+        this.spacing = (60 * this.speed) / (this.bpm * opb);
         
       
         // for level restart
@@ -255,12 +255,13 @@ export class GameScene extends Scene {
         
         // Set lighting for row
         let light_pos = box1_transform.times(vec4(0, 0, 0, 1)).plus(vec4(0, 5, 3, 0));
-        let light_color = color(1, 0.2, 0.2, 1);
+        let light_color = color(1, 0.1, 0, 1);
         if (side == "l") {
-            light_color = color(0.2, 0.2, 1, 1);
+            light_color = color(0, 0.3, 1, 1);
         }
-
-        program_state.lights = [ new Light( light_pos, light_color, 30 * Math.sin(8*t) + 32 ) ]; 
+        
+        let pulse_time = 1 / 60 / (1 / this.bpm);
+        program_state.lights = [ new Light( light_pos, light_color, 30 * Math.sin(Math.PI*pulse_time*(t - this.start_time)) + 32 ) ]; 
 
         let lit_range = 2 * this.bg_r_boxes.length / 3;
         let curr_lit = [    Math.floor(Math.random() * lit_range),
