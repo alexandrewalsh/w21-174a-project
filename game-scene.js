@@ -54,6 +54,15 @@ export class GameScene extends Scene {
             new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), //back
         ];
 
+        this.shapes.player.arrays.texture_coord = [
+            new Vector([0,0]), new Vector([1,0]), new Vector([0,1]), new Vector([1,1]), //bottom
+            new Vector([0,0]), new Vector([1,0]), new Vector([0,1]), new Vector([1,1]), //top
+            new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), //left
+            new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), new Vector([0,0]), //right
+            new Vector([0,0]), new Vector([1,0]), new Vector([0,1]), new Vector([1,1]), //front
+            new Vector([0,0]), new Vector([1,0]), new Vector([0,1]), new Vector([1,1]), //back
+        ];
+
         // *** Materials
         this.materials = {
             // TEST MATERIALS //
@@ -115,6 +124,12 @@ export class GameScene extends Scene {
                 color: color( 1,1,1,1 ),
                 ambient: .05, diffusivity: .5, specularity: .5, smoothness: 10
             }),
+            player_circle: new Material(new Textured_Phong(), {
+                texture: new Texture("assets/player_circle.PNG"),
+                ambient: 1,
+                diffusivity: 0,
+                color: hex_color("#000000")
+            }),
         }
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
@@ -141,20 +156,23 @@ export class GameScene extends Scene {
         // Create arrays for background boxes
         this.bg_r_boxes = [];
         this.bg_l_boxes = [];
+        this.bg_b_boxes = [];
         this.bg_wrap = 0;
+
+        // Do left and right background boxes
         for (let i = 0; i < 2; i++) {
             for (let j = 0; j < this.track_length / 4; j++) {
                 const box1_height = 1.0 + 3.0 * Math.random();
                 const box2_height = 1.0 + 3.0 * Math.random();
 
-                const box1_x_offset = (-1.0)**(i) * (8.0 + Math.random());
-                const box2_x_offset = (-1.0)**(i) * (10.0 + Math.random());
+                const box1_x_offset = (-1.0)**(i) * (7.0 + 5.0 * Math.random());
+                const box2_x_offset = (-1.0)**(i) * (10.0 + 5.0 * Math.random());
 
-                const box1_y_offset = 3.0 * (Math.random() - 0.5);
-                const box2_y_offset = 3.0 * (Math.random() - 0.5);
+                const box1_y_offset = 10.0 * (Math.random() - 0.5) - 1.0;
+                const box2_y_offset = 10.0 * (Math.random() - 0.5) - 1.0;
 
                 const row = {'box1': {'height': box1_height, 'x_offset': box1_x_offset, 'y_offset': box1_y_offset},
-                             'box2': {'height': box2_height, 'x_offset': box2_x_offset, 'y_offset': box2_y_offset} }
+                             'box2': {'height': box2_height, 'x_offset': box2_x_offset, 'y_offset': box2_y_offset} };
 
                 if (i == 0) {
                     this.bg_r_boxes.push(row);
@@ -163,6 +181,24 @@ export class GameScene extends Scene {
                 }
             } 
         }
+        // Do bottom background boxes
+        for (let j = 0; j < this.track_length / 4; j++) {
+            const box1_height = 1.0 + 3.0 * Math.random();
+            const box2_height = 1.0 + 3.0 * Math.random();
+
+            const box1_x_offset = -3.0 + 4.0 * (Math.random() - 0.5);
+            const box2_x_offset = 3.0 + 4.0 * (Math.random() - 0.5);
+
+            const box1_y_offset = 5.0 * (Math.random() - 0.5) - 8.0;
+            const box2_y_offset = 5.0 * (Math.random() - 0.5) - 8.0;
+
+            const row = {'box1': {'height': box1_height, 'x_offset': box1_x_offset, 'y_offset': box1_y_offset},
+                         'box2': {'height': box2_height, 'x_offset': box2_x_offset, 'y_offset': box2_y_offset} };
+
+            this.bg_b_boxes.push(row);
+        } 
+        console.log("r len: " + this.bg_r_boxes.length);
+        console.log("b len: " + this.bg_b_boxes.length);
     }
 
     // Min index is the earliest obstacle still in front of the camera
@@ -247,6 +283,8 @@ export class GameScene extends Scene {
         let row = this.bg_r_boxes[i];
         if (side == "l") {
             row = this.bg_l_boxes[i];
+        } else if (side == "b") {
+            row = this.bg_b_boxes[i];
         }
 
         // Compute box transforms
@@ -258,6 +296,8 @@ export class GameScene extends Scene {
         let light_color = color(1, 0.1, 0, 1);
         if (side == "l") {
             light_color = color(0, 0.3, 1, 1);
+        } else if (side == "b") {
+            light_color = color(0.7, 0.1, 0.7, 1);
         }
         
         let pulse_time = 1 / 60 / (1 / this.bpm);
@@ -290,6 +330,7 @@ export class GameScene extends Scene {
         if (t_since_wrap > 6 / (this.speed / 2)) {
             this.bg_r_boxes.push(this.bg_r_boxes.shift());
             this.bg_l_boxes.push(this.bg_l_boxes.shift());
+            this.bg_b_boxes.push(this.bg_b_boxes.shift());
             this.bg_wrap = t;
             t_since_wrap = 0;
         }
@@ -299,6 +340,7 @@ export class GameScene extends Scene {
         for (let i = 0; i < this.bg_r_boxes.length; i++) {
             this.draw_box_row(context, program_state, t, i, bg_box_transform, t_since_wrap * this.speed / 2, "r");
             this.draw_box_row(context, program_state, t, i, bg_box_transform, t_since_wrap * this.speed / 2, "l");
+            this.draw_box_row(context, program_state, t, i, bg_box_transform, t_since_wrap * this.speed / 2, "b");
 
             bg_box_transform = bg_box_transform.times(Mat4.translation(0, 0, -6));
         }
@@ -437,8 +479,8 @@ export class GameScene extends Scene {
         const light_position2 = vec4(0, 20, -20, 1);
         const og2_light = new Light(light_position2, color(1, 1, 1, 1), 1000);
 
-        const player_light_position = vec4(1.7, 1.5, 2, 1);
-        const player_light = new Light(player_light_position, color(0.5, 0.5, 1, 1), 10);
+        const player_light_position = vec4(1.7, 1.5, 20, 1);
+        const player_light = new Light(player_light_position, color(0.5, 0.5, 1, 1), 1);
 
         program_state.lights = [player_light];
 
@@ -447,12 +489,23 @@ export class GameScene extends Scene {
         const red = hex_color("#ff0000");
         let model_transform = Mat4.identity();
       
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // Draw Player
         let player_transform = this.player.getPosition(t);
+        let player_inner_transform = player_transform.times(Mat4.scale(0.99, 0.99, 0.99));
+        this.shapes.player.draw(context, program_state, player_inner_transform, this.materials.brick);
+        let lane = this.player.getLane();
 
-        this.shapes.player.draw(context, program_state, player_transform, this.materials.tron_hal);
+        let pulse_time = 1 / 60 / (1 / this.bpm);
+        let pulse_color = 0.3 * Math.sin(Math.PI*pulse_time*(t - this.start_time)) + 0.7;
 
-        //let player_light_position = player_transform.times(vec4(0, 0, 0, 1)).plus(vec4(0, 0, 3, 0));
-        //program_state.lights = [new Light(player_light_position, color(0.5, 0.5, 1, 1), 10**(3))];
+        if (lane == "r") {
+            this.shapes.player.draw(context, program_state, player_transform, this.materials.player_circle.override({color: color(pulse_color, 0.1, 0.1, 1)}));
+        } else {
+            this.shapes.player.draw(context, program_state, player_transform, this.materials.player_circle.override({color: color(0.1, 0.1, pulse_color, 1)}));
+        }
+
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         // background
         this.make_background(context, program_state, t);
@@ -622,10 +675,6 @@ export class GameScene extends Scene {
         obstacle_transform = obstacle_transform.times(Mat4.translation(-1.5, 1.5, -this.track_length));
         obstacle_transform = obstacle_transform.times(Mat4.scale(1.5, 1, 1));
         this.draw_obstacles(obstacle_array, obstacle_transform, context, program_state, t);
-
-        if (this.detect_collision(t, obstacle_array, player_transform)) {
-            this.shapes.torus.draw(context, program_state, Mat4.identity().times(Mat4.translation(6, 2.5, 5)), this.materials.blue);
-        }
     }
 }
 
