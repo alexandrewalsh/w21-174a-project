@@ -1,30 +1,16 @@
-# tiny-graphics.js
+# CS 174A Final Project
 
-This is a small, single file JavaScript utility.  It organizes WebGL programs to be object-oriented and minimally cluttered.  
+Creators: Alexandre Walsh (UID: 305-083-852), Bradley Pickard (UID: ), Anna Reed (UID: 705-105-046)
 
-Writing code with raw JavaScript and WebGL can be repetitive and tedious.  Using frameworks like three.js can create an undesired separation between you and the raw JavaScript and WebGL and common graphics operations you want to learn.  Unlike other frameworks, tiny-graphics.js is purpose-built for education, has small source code, and teaches you how it is made.
+Design and Implementation
+    Taking inspiration from Tron and Beat Saber, we created a rhythm-based game that features a player-controlled avatar on tracks, weaving through beat-aligned obstacles. The player uses 3 keys for jump, left, or right, respectively, to aid in navigating through. When the avatar collides with an obstacle, collision detection leads to the score incrementing, with the goal of the game being to get the smallest score by the end of the song.
 
-This tiny library gives your WebGL program access to linear algebra routines, useful UI controls and readouts, and the drawing utilities needed by modern shader-based graphics.  It factors away the repetitive logic of GPU communication into re-usable objects.  The objects can be seamlessly shared between multiple WebGL contexts (drawing regions) on a web page.
+    The spacing and speed of the obstacles are determined through an array which is encoded to correspond to a certain song. There is an element of the array for each beat in the song which contains either a hurdle object, or a blockade object, and specifies whether to draw the object on the right track, the left track, or both tracks. Each frame, the draw_obstacles function determines which elements of the array to draw and increments the position of each object by a set speed (which is determined by the beats per minute of the song).
 
-The tiny-graphics.js software library has accompanied UCLA Computer Science's 174a course (Intro to Computer Graphics) since 2016, replacing Edward Angel's supplemental code from his textbook "Interactive Computer Graphics: A Top-Down Approach with WebGL".  Compared to Angel's library, tiny-graphics.js offers more organization and functionality.
+    Lighting of the surroundings are also correlated with the beat of the song. Textures in the game were specifically designed by us and lighting and effects were adjusted to create a Tron-like aesthetic to the game.
 
-This code library accompanies and supports a web project by the same author called "The Encyclopedia of Code", a crowd-sourced repository of WebGL demos and educational tutorials that uses an online editor.
+Advanced Features
+Collision detection was implemented using the Axis Aligned Bounding Box technique. At every frame, for each obstacle present on-screen, a bounding box was formed from its center coordinate, width, height, and depth. The same process is performed on the player object, wherever it happens to be in its movement and jump animations. Then, each obstacle bounding box is tested against the player bounding box. In order to prevent multiple collisions on the same obstacle, there is a 3-frame countdown after collision before detection resumes.
 
-To run a sample using tiny-graphics.js, visit its GitHub Pages link: https://encyclopedia-of-code.github.io/tiny-graphics-js/
-
-To see all the demos and edit them:  Open the included "host.bat" or "host.command" file, then open localhost in your browser.  Open Developer Tools and create a workspace for your new folder.  Now you can edit the files, which is necessary to view the different demos.
-
-To select a demo, open and edit main-scene.js.  Assign your choice to the Main_Scene variable.  Your choices for scenes are:
-
-* Minimal_Webgl_Demo
-* Transforms_Sandbox
-* Axes_Viewer_Test_Scene
-* Inertia_Demo
-* Collision_Demo
-* Many_Lights_Demo
-* Obj_File_Demo
-* Text_Demo
-* Scene_To_Texture_Demo
-* Surfaces_Demo
-
-The code comments in each file should help, especially if you look at the definition of Transforms_Sandbox.  So should the explanations that the demos print on the page.  Enjoy!
+References
+https://developer.mozilla.org/en-US/docs/Games/Techniques/3D_collision_detection?fbclid=IwAR1PwtImgN2q1Z56GnnV3mL9GPgbcqtXW2jIdQ0H5yRLx6Gs19AnGk8W3CE
